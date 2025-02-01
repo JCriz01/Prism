@@ -2,5 +2,5 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": "dist",
-  "exc": "DEBUG=prism-api:* ts-node ./src/bin/www.ts"
+  "exc": "DEBUG=prism-api:* ts-node ./src/bin/www"
 }
