@@ -4,28 +4,32 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+import app from '../app';
 var debug = require('debug')('prism-api:server');
-var http = require('http');
+import http from 'http';
+//* ENV variables
+const hostname = process.env.ServerHost || 'localhost';
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+let port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+const server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+server.listen({ port, hostname }, () =>
+  console.log('Server initilized on host:', `${hostname}:${port}`),
+);
 server.on('error', onError);
 server.on('listening', onListening);
 
@@ -34,7 +38,7 @@ server.on('listening', onListening);
  */
 
 function normalizePort(val: string) {
-  var port = parseInt(val, 10);
+  const port = parseInt(val, 10);
 
   if (isNaN(port)) {
     // named pipe
@@ -58,7 +62,7 @@ function onError(error: any) {
     throw error;
   }
 
-  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+  const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -80,7 +84,11 @@ function onError(error: any) {
  */
 
 function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
+  const addr = server.address();
+  const bind = addr
+    ? typeof addr === 'string'
+      ? 'pipe ' + addr
+      : 'port ' + addr.port
+    : 'unknown';
   debug('Listening on ' + bind);
 }
