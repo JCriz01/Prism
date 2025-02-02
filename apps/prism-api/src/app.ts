@@ -7,6 +7,7 @@ import logger from 'morgan';
 import usersRouter from './routes/users';
 import { PrismaClient } from '@prisma/client';
 import passport from './utils/passport';
+const session = require('express-session');
 const app = express();
 
 //custom defined prisma client
@@ -19,10 +20,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'secret',
+    resave: false,
+    saveUnitialized: false,
+  }),
+);
 //using passport for authentication
 app.use(passport.session());
-//app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/api/users', usersRouter);
 
 export default app;
