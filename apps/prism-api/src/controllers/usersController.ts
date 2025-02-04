@@ -56,3 +56,53 @@ export const registerUser = async (
     next(err);
   }
 };
+
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        username: req.body.username,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    //user exists
+    const match = await bcrypt.compare(req.body.password, user.password);
+
+    if (!match) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    const token = issueJWT(user);
+    res.json({
+      message: 'User logged in successfully',
+      token: token.token,
+      expiresIn: token.expires,
+      user,
+    });
+  } catch (error) {
+    debug(error);
+    next(error);
+  }
+};
+
+export const logoutUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    res.cookie('jwt', '', { maxAge: 1 });
+    res.status(200).json({ message: 'User logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+    next(error);
+  }
+};
