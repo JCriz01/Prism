@@ -8,6 +8,7 @@ import usersRouter from './routes/users';
 import { PrismaClient } from '@prisma/client';
 import passport from './utils/passport';
 const session = require('express-session');
+import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 const app = express();
 
 //custom defined prisma client
@@ -30,5 +31,8 @@ app.use(
 //using passport for authentication
 app.use(passport.session());
 app.use('/api/users', usersRouter);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

@@ -26,7 +26,7 @@ export const registerUser = async (
     });
 
     if (user) {
-      return res.status(400).json({ error: 'User already exists' });
+      throw Error('User already exists');
     }
 
     //creating a new user
