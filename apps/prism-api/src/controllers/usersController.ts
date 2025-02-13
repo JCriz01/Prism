@@ -57,6 +57,7 @@ export const registerUser = async (
   }
 };
 
+//* Login a user
 export const loginUser = async (
   req: Request,
   res: Response,
@@ -70,14 +71,14 @@ export const loginUser = async (
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      throw Error('User not found');
     }
 
     //user exists
     const match = await bcrypt.compare(req.body.password, user.password);
 
     if (!match) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      throw Error('Invalid credentials');
     }
 
     const token = issueJWT(user);
@@ -93,16 +94,157 @@ export const loginUser = async (
   }
 };
 
+//* Logout user from application
 export const logoutUser = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<any> => {
   try {
+    console.log('req.user', req.user);
     res.cookie('jwt', '', { maxAge: 1 });
     res.status(200).json({ message: 'User logged out successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    debug(error);
+    next(Error('An error occurred while logging out'));
+  }
+};
+
+//*Send Friend Request
+//TODO: Add a check to see if the user has already sent a friend request
+export const sendFriendRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const id = req.params.id;
+    console.log('current user: ', req.user);
+    const currentUser = req.user as User;
+    id === currentUser.id &&
+      res
+        .status(400)
+        .json({ message: 'Cannot send a friend request to yourself' });
+
+    //check if there is an existing friend request
+    const existingRequest = await prisma.friend.findFirst({
+      where: {
+        OR: [
+          {
+            senderId: currentUser.id,
+            receiverId: id,
+          },
+          {
+            senderId: id,
+            receiverId: currentUser.id,
+          },
+        ],
+      },
+    });
+
+    if (existingRequest) {
+      throw Error('Friend request already exists');
+    }
+
+    //Proceed to send friend request
+
+    await prisma.friend.create({
+      data: {
+        senderId: currentUser.id,
+        receiverId: id,
+        status: 'PENDING',
+      },
+    });
+    res.status(200).json({ message: 'Friend request sent successfully' });
+  } catch (error) {
+    debug(error);
+    next(error);
+  }
+};
+
+//*Accept Friend Request
+export const acceptFriendRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const id = req.params.id;
+    const currentUser = req.user as User;
+
+    id === currentUser.id &&
+      res
+        .status(400)
+        .json({ message: 'Cannot accept friend request to yourself.' });
+
+    //check if the friend request exists
+    const pendingRequest = await prisma.friend.findFirst({
+      where: {
+        senderId: id,
+        receiverId: currentUser.id,
+        status: 'PENDING',
+      },
+    });
+
+    if (!pendingRequest) {
+      throw Error('Friend request does not exist');
+    }
+
+    //Accept the friend request
+    await prisma.friend.update({
+      where: {
+        id: pendingRequest.id,
+      },
+      data: { status: 'ACCEPTED' },
+    });
+    res.status(200).json({ message: 'Friend request accepted successfully' });
+  } catch (error) {
+    debug(error);
+    next(error);
+  }
+};
+
+//*Remove Friend
+//TODO: add a check to see if the user is not friends with the requested user.
+export const removeFriend = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const id = req.params.id;
+    const currentUser = req.user as User;
+
+    //Checking if the user is friends
+    const validFriend = await prisma.friend.findFirst({
+      where: {
+        OR: [
+          {
+            senderId: currentUser.id,
+            receiverId: id,
+            status: 'ACCEPTED',
+          },
+          {
+            senderId: id,
+            receiverId: currentUser.id,
+            status: 'ACCEPTED',
+          },
+        ],
+      },
+    });
+
+    if (!validFriend) {
+      throw Error('User is not a friend');
+    }
+
+    await prisma.friend.delete({
+      where: {
+        id: validFriend.id,
+      },
+    });
+    res.status(200).json({ message: 'Friend removed successfully' });
+  } catch (error) {
+    debug(error);
     next(error);
   }
 };
