@@ -51,6 +51,7 @@ model Server {
   userId String
   owner User @relation("Owner",fields: [ownerId], references: [id])
   ownerId String
+  icon String @default("")
   channels Channel[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

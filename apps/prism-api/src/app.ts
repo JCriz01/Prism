@@ -5,6 +5,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import usersRouter from './routes/users';
+import serverRouter from './routes/servers';
 import { PrismaClient } from '@prisma/client';
 import passport from './utils/passport';
 const session = require('express-session');
@@ -31,6 +32,7 @@ app.use(
 //using passport for authentication
 app.use(passport.session());
 app.use('/api/users', usersRouter);
+app.use('/api/server', serverRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
