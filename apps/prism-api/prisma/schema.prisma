@@ -24,8 +24,23 @@ model User {
   Servers  Server[] @relation("Users")
   owner  Server[] @relation("Owner")
   channelMessages ChannelMessage[]
+  sentFriendRequests Friend[] @relation("sentRequests")
+  receivedFriendRequests Friend[] @relation("receivedRequests")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Friend {
+  id String @id @default(uuid())
+  senderId String
+  receiverId String
+  status FriendStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  sender User @relation("sentRequests", fields: [senderId], references: [id])
+  receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
 }
 
 model Server {
@@ -61,4 +76,10 @@ model ChannelMessage {
   channelId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum FriendStatus {
+  ACCEPTED
+  PENDING
+  DECLINED
 }
