@@ -7,6 +7,7 @@ import {
   getServerById,
   updateServer,
   deleteServer,
+  joinServer,
 } from '../controllers/serversController';
 const router = express.Router();
 
@@ -39,5 +40,11 @@ router.delete(
   '/delete/:id',
   passport.authenticate('jwt', { session: false }),
   deleteServer,
+);
+
+router.post(
+  '/join/:id',
+  passport.authenticate('jwt', { session: false }),
+  joinServer,
 );
 export default router;

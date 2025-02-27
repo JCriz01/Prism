@@ -5,26 +5,32 @@ import registerSchema from '../schema/registerSchema';
 import { User, Server } from '@prisma/client';
 const debug = require('debug')('prism-api:server');
 
-//* Create a new server
-export const createServer = async (
+//**Shared Server CRUD operations */
+//* Get a specific server by id
+export const getServerById = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<any> => {
   try {
-    const currentUser = req.user as User;
-    const { name, description } = req.body;
-    const server = await prisma.server.create({
-      data: {
-        ownerId: currentUser.id,
-        userId: currentUser.id,
-        name,
-        description,
+    const { id } = req.params;
+    const server = await prisma.server.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
       },
     });
-    return res
-      .status(201)
-      .json({ message: 'Server created successfully', server });
+    if (!server) {
+      return res.status(404).json({ message: 'Server not found' });
+    }
+    return res.status(200).json({ server });
   } catch (error) {
     debug(error);
     next(error);
@@ -65,15 +71,17 @@ export const getServers = async (
     next(error);
   }
 };
+//**Server User CRUD operations */
 
-//* Get a specific server by id
-export const getServerById = async (
+export const joinServer = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<any> => {
   try {
     const { id } = req.params;
+    const currentUser = req.user as User;
+
     const server = await prisma.server.findUnique({
       where: {
         id: id,
@@ -87,10 +95,36 @@ export const getServerById = async (
         },
       },
     });
+    console.log(server);
     if (!server) {
       return res.status(404).json({ message: 'Server not found' });
     }
-    return res.status(200).json({ server });
+  } catch (error) {
+    debug(error);
+    next(error);
+  }
+};
+//**Server Admin CRUD operations */
+//* Create a new server
+export const createServer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const currentUser = req.user as User;
+    const { name, description } = req.body;
+    const server = await prisma.server.create({
+      data: {
+        ownerId: currentUser.id,
+        userId: currentUser.id,
+        name,
+        description,
+      },
+    });
+    return res
+      .status(201)
+      .json({ message: 'Server created successfully', server });
   } catch (error) {
     debug(error);
     next(error);
