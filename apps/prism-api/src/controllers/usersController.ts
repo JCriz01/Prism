@@ -4,6 +4,7 @@ import { issueJWT } from '../utils/issueJWT';
 import { NextFunction, Response, Request } from 'express';
 import registerSchema from '../schema/registerSchema';
 import { User } from '@prisma/client';
+import { log } from 'console';
 const debug = require('debug')('prism-api:server');
 
 //* Sign up a new user
@@ -13,22 +14,28 @@ export const registerUser = async (
   next: NextFunction,
 ): Promise<any> => {
   try {
+    console.log('signup route hit');
     if (process.env.NODE_ENV === 'development') {
       return res.status(400).json({ error: 'Signup is currently disabled.' });
     }
+    console.log(req.body);
     registerSchema.parse(req.body);
-    const { email, password, username, dateOfBirth, name } = req.body;
+    const { email, password, username, name } = req.body;
 
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { username }],
+        OR: [{ email: { equals: email } }, { username: { equals: username } }],
       },
     });
+    console.log('user', user);
 
-    if (user) {
-      throw Error('User already exists');
-    }
+    user && user.email === email
+      ? next(Error('Email already exists'))
+      : user && user.username === username
+        ? next(Error('Username already exists'))
+        : null;
 
+    console.log('creating a new user');
     //creating a new user
     bcrypt.hash(password, 10, async (err, hash) => {
       if (err) {
@@ -53,7 +60,7 @@ export const registerUser = async (
     });
   } catch (err) {
     debug(err);
-    next(err);
+    next(Error('An error occurred while creating a new user'));
   }
 };
 
