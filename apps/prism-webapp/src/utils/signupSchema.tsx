@@ -1,5 +1,5 @@
 "use client";
-import { z } from "zod";
+import { date, z } from "zod";
 
 export const signupSchema = z.object({
   username: z.string().min(3).max(20),

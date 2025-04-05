@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { signupSchema } from "@/utils/signupSchema";
 import { z } from "zod";
-
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,8 @@ function RouteComponent() {
           password: formData.password,
         }),
       });
+      const data = await res.json();
+      console.log(data);
     } catch (error) {}
   };
 
@@ -98,6 +100,7 @@ function RouteComponent() {
                 />
               </div>
             </div>
+
             <div>
               <div className="flex flex-col">
                 <Label htmlFor="password">Password</Label>
@@ -118,10 +121,15 @@ function RouteComponent() {
                 />
               </div>
             </div>
-            <Button type="submit">Sign Up</Button>
+            <Button className="self-center" type="submit">
+              Sign Up
+            </Button>
           </form>
         </CardContent>
       </Card>
+      <p>
+        Already have an account? <Link to="/auth/login">Login</Link>
+      </p>
     </div>
   );
 }
