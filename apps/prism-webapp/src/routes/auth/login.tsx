@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,15 @@ import { Label } from "@/components/ui/label";
 import loginSchema from "@/utils/loginSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useUserStore } from "@/store/userStore";
 import { z } from "zod";
 export const Route = createFileRoute("/auth/login")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const setUser = useUserStore((state) => state.updateUser);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -42,6 +45,18 @@ function RouteComponent() {
 
       const data = await res.json();
       console.log(data);
+
+      //store Token in local storage
+      if (data.token) {
+        localStorage.setItem("user-token", data.token);
+        console.log("setting user token, ", data.token);
+
+        //setting user in userStore
+        setUser(data.user);
+
+        //redirecting to actual web application root path.
+        navigate({ to: "/spectrums/home" });
+      }
     } catch (error) {
       console.error(error);
     }

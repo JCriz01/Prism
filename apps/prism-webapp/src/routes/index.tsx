@@ -7,6 +7,7 @@ import logoUrl from "../assets/logo.png";
 export const Route = createFileRoute("/")({ component: HomeComponent });
 
 function HomeComponent() {
+  const userToken = localStorage.getItem("user-token");
   return (
     <div className="flex flex-col h-full mx-9">
       <header className=" flex justify-between mb-12">
@@ -20,9 +21,15 @@ function HomeComponent() {
           <div> Support</div>
         </nav>
         <Button className=" self-center">
-          <Link to="/auth/signup">
-            <div>Sign Up</div>
-          </Link>
+          {userToken ? (
+            <Link to="/spectrums/home">
+              <p>Access Prism</p>
+            </Link>
+          ) : (
+            <Link to="/auth/login">
+              <p>Login</p>
+            </Link>
+          )}
         </Button>
       </header>
       <main className=" w-full flex self-center justify-center items-start grow ">

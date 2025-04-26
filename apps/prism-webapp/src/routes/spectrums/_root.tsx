@@ -1,16 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/spectrums/_root")({
-  /*
-  beforeLoad: async ({location}) => {
-    if(!isAuthenticated()){
+  beforeLoad: async ({ location }) => {
+    if (!localStorage.getItem("user-token")) {
       throw redirect({
-        to: '/auth/login',
-        search: location.href
-      })
+        to: "/auth/login",
+        search: location.href,
+      });
     }
   },
-  */
+
   component: RouteComponent,
 });
 
