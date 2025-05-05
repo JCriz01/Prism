@@ -255,3 +255,32 @@ export const removeFriend = async (
     next(error);
   }
 };
+
+//*Get Friends List
+export const getFriendsList = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const currentUser = req.user as User;
+    const friends = await prisma.friend.findMany({
+      where: {
+        OR: [
+          { senderId: currentUser.id, status: 'ACCEPTED' },
+          { receiverId: currentUser.id, status: 'ACCEPTED' },
+        ],
+      },
+      include: {
+        sender: true,
+        receiver: true,
+      },
+    });
+    res
+      .status(200)
+      .json({ message: 'Friends list fetched successfully', friends });
+  } catch (error) {
+    debug(error);
+    next(error);
+  }
+};

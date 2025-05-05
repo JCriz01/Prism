@@ -7,6 +7,7 @@ import {
   sendFriendRequest,
   acceptFriendRequest,
   removeFriend,
+  getFriendsList,
 } from '../controllers/usersController';
 const router = express.Router();
 
@@ -38,6 +39,13 @@ router.delete(
   '/friend/remove/:id',
   passport.authenticate('jwt', { session: false }),
   removeFriend,
+);
+
+/* GET friend list */
+router.get(
+  '/friends',
+  passport.authenticate('jwt', { session: false }),
+  getFriendsList,
 );
 
 export default router;

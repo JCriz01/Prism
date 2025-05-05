@@ -95,7 +95,7 @@ function RouteComponent() {
         </CardContent>
       </Card>
       <p>
-        Already have an account? <Link to="/auth/login">Login</Link>
+        Dont have an account? <Link to="/auth/signup">Signup</Link>
       </p>
     </div>
   );
