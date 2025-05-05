@@ -1,8 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useUserStore } from "@/store/userStore";
-import { useEffect } from "react";
-import { useQueries } from "@tanstack/react-query";
-
+import { ServerSidebar } from "@/components/server-sidebar";
+import { ChannelSidebar } from "@/components/channel-sidebar";
+import { ChatArea } from "@/components/chat-area";
+import { MembersList } from "@/components/members-list";
+import { useState } from "react";
 export const Route = createFileRoute("/spectrums/home/")({
   beforeLoad: async ({ location }) => {
     if (!localStorage.getItem("user-token")) {
@@ -15,80 +17,32 @@ export const Route = createFileRoute("/spectrums/home/")({
   component: RouteComponent,
 });
 
-const fetchSpectrums = async () => {
-  const res = await fetch(`http://localhost:5200/api/server/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("user-token")}`,
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error("Network response was not ok");
-  }
-  const data = await res.json();
-  return data;
-};
-
-const fetchFriends = async () => {
-  const res = await fetch(`http://localhost:5200/api/users/friends/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("user-token")}`,
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error("Network response was not ok");
-  }
-  const data = await res.json();
-  return data;
-};
-
 function RouteComponent() {
   const { user } = useUserStore();
+  const token = localStorage.getItem("user-token");
+  const [activeView, setActiveView] = useState<
+    "spectrum" | "channel" | "chat" | "friends" | "members"
+  >("spectrum");
   console.log("user", user);
 
-  const apiData = useQueries({
-    queries: [
-      { queryKey: ["spectrum"], queryFn: fetchSpectrums },
-      { queryKey: ["friends"], queryFn: fetchFriends },
-    ],
-  });
-
-  const isLoading = apiData.some((query) => query.isLoading);
-  const isError = apiData.some((query) => query.isError);
-  const error = apiData.find((query) => query.isError)?.error;
-  const [spectrumData, friendsData] = apiData.map((query) => query.data);
-  console.log("spectrumData", spectrumData);
-  console.log("friendsData", friendsData);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  if (isError) return <div>Error: {error?.message}</div>;
   return (
     <div className="flex h-full items-center justify-start">
-      <aside className="bg-black w-16 h-full self-start flex flex-col items-center justify-start py-6">
-        <div className="bg-white m-2">Logo</div>
-        <div className="bg-white w-[42px] h-[42px] ">Add Server</div>
-        {spectrumData &&
-          spectrumData.servers.map((spectrum: any) => {
-            return (
-              <div
-                key={spectrum.id}
-                className="bg-white w-[42px] h-[42px] p-2 m-2 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200"
-              >
-                {spectrum.name}
-              </div>
-            );
-          })}
-      </aside>
-      <main className="bg-green-300 ">Testing Testing</main>
+      {/* Server sidebar */}
+      <div className={`${"block"} w-[72px] h-full bg-black `}>
+        <ServerSidebar onServerClick={() => setActiveView("spectrum")} />
+      </div>
+      {/* Channel Sidebar */}
+      <div className={`${"block"} w-60 h-full bg-slate-900 `}>
+        <ChannelSidebar onChannelClick={() => setActiveView("chat")} />
+      </div>
+      {/* Chat area */}
+      <div className=" flex-col flex-grow h-full bg-slate-900">
+        <ChatArea onMembersClick={() => setActiveView("members")} />
+      </div>
+      {/* member sidebar */}
+      <div className="block w-60 h-full bg-slate-900 ">
+        <MembersList onBackClick={() => setActiveView("chat")} />
+      </div>
     </div>
   );
 }

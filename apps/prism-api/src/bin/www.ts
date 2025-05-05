@@ -7,6 +7,7 @@
 import app from '../app';
 var debug = require('debug')('prism-api:server');
 import http from 'http';
+const { Server } = require('socket.io');
 //* ENV variables
 const hostname = process.env.ServerHost || 'localhost';
 
@@ -26,6 +27,26 @@ const server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
+
+//Implementing Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3001',
+    methods: ['GET', 'POST'],
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  socket.on('private_message', ({ content, to }) => {
+    io.to(to).emit('private_message', { content, from: socket.id });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
+});
 
 server.listen({ port, hostname }, () =>
   console.log('Server initilized on host:', `${hostname}:${port}`),

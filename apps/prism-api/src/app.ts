@@ -12,6 +12,8 @@ const session = require('express-session');
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 import helmet from 'helmet';
 import cors from 'cors';
+import http from 'http';
+const { Server } = require('socket.io');
 const app = express();
 
 //custom defined prisma client
