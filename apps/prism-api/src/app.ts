@@ -21,7 +21,9 @@ export const prismaClient = new PrismaClient({
   log: ['query', 'info', 'warn'],
 });
 
-const allowedOrigins = ['http://localhost:3001'];
+const clientHost = process.env.ClientHost || 'http://localhost';
+const clientPort = process.env.ClientPort || '3001';
+const allowedOrigins = [`${clientHost}:${clientPort}`];
 
 //use cors to allow cross origin resource sharing
 app.use(
