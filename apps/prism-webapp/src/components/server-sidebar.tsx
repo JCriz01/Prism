@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { useQueries } from "@tanstack/react-query";
-
+import { ServerModal } from "@/components/server-modal";
+import { Button } from "@/components/ui/button";
 interface ServerSidebarProps {
   onServerClick: () => void;
 }
@@ -51,6 +52,7 @@ const fetchFriends = async () => {
 };
 
 export function ServerSidebar({ onServerClick }: ServerSidebarProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const servers = [
     { id: "1", name: "Discord Clone", initial: "D" },
     { id: "2", name: "Gaming", initial: "G" },
@@ -135,7 +137,10 @@ export function ServerSidebar({ onServerClick }: ServerSidebarProps) {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button className="w-12 h-12 rounded-full bg-[#36393f] flex items-center justify-center hover:rounded-2xl transition-all duration-200 hover:bg-green-500 mt-2">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="w-12 h-12 rounded-full bg-[#36393f] flex items-center justify-center hover:rounded-2xl transition-all duration-200 hover:bg-green-500 mt-2"
+            >
               <Plus className="text-green-500 hover:text-white" />
             </button>
           </TooltipTrigger>
@@ -174,6 +179,13 @@ export function ServerSidebar({ onServerClick }: ServerSidebarProps) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {/* Add Sever Functionality Modal */}
+      <ServerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        setIsModalOpen={setIsModalOpen}
+      />
     </div>
   );
 }

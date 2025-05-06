@@ -27,7 +27,7 @@ const server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-
+/*
 //Implementing Socket.io
 const io = new Server(server, {
   cors: {
@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
     console.log('Socket disconnected:', socket.id);
   });
 });
-
+*/
 server.listen({ port, hostname }, () =>
   console.log('Server initilized on host:', `${hostname}:${port}`),
 );
