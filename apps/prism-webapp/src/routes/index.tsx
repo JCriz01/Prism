@@ -1,12 +1,13 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-
 import logoUrl from "../assets/logo.png";
+
 // This is the initial route for the landing page of the website
 export const Route = createFileRoute("/")({ component: HomeComponent });
 
 function HomeComponent() {
+  //checking to verify if there is a valid token in the localstorage
   const userToken = localStorage.getItem("user-token");
   return (
     <div className="flex flex-col h-full mx-9">

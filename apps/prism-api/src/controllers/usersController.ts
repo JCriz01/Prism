@@ -7,6 +7,30 @@ import { User } from '@prisma/client';
 import { log } from 'console';
 const debug = require('debug')('prism-api:server');
 
+//* Get current user
+export const getCurrentUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    console.log('req.user', req.user);
+    const currentUser = req.user as User;
+    return res.status(200).json({
+      message: 'User fetched successfully',
+      user: {
+        id: currentUser.id,
+        name: currentUser.name,
+        email: currentUser.email,
+        username: currentUser.username,
+      },
+    });
+  } catch (error) {
+    debug(error);
+    next(Error('An error occurred while fetching user'));
+  }
+};
+
 //* Sign up a new user
 export const registerUser = async (
   req: Request,

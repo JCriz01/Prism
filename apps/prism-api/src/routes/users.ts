@@ -17,6 +17,15 @@ router.post('/register', registerUser);
 /* POST login user */
 router.post('/login', loginUser);
 
+/* GET user profile */
+router.get(
+  '/session',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    res.json(req.user);
+  },
+);
+
 /* POST logout user */
 router.post('/logout', logoutUser);
 

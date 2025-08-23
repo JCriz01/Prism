@@ -57,13 +57,14 @@ export function MembersList({ onBackClick }: MembersListProps) {
           <Input
             type="text"
             placeholder="Search members"
-            className="bg-[#1e1f22] border-none text-sm focus-visible:ring-0 focus-visible:ring-offset-0 pl-8"
+            className="bg-[#1e1f22] border-none text-white text-sm focus-visible:ring-0 focus-visible:ring-offset-0 pl-8"
           />
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
         </div>
       </div>
 
       {/* Role categories */}
+      {/*}
       <ScrollArea className="flex-1">
         <div className="px-4 mb-2">
           <h3 className="text-xs font-semibold text-gray-400 mb-2">
@@ -224,6 +225,7 @@ export function MembersList({ onBackClick }: MembersListProps) {
             ))}
         </div>
       </ScrollArea>
+      */}
     </div>
   );
 }

@@ -71,7 +71,40 @@ export const getServers = async (
     next(error);
   }
 };
+
 //**Server User CRUD operations */
+
+//* Join server by name
+export const joinServerByName = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
+  try {
+    const { name } = req.params;
+    const currentUser = req.user as User;
+    const server = await prisma.server.findFirst({
+      where: { name: name },
+    });
+    if (!server) {
+      return res.status(404).json({ message: 'Server not found' });
+    }
+    //found server, now add user to server
+    await prisma.server.update({
+      where: { id: server.id },
+      data: {
+        users: {
+          connect: {
+            id: currentUser.id,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    debug(error);
+    next(error);
+  }
+};
 
 export const joinServer = async (
   req: Request,

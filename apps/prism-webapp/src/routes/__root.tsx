@@ -4,6 +4,7 @@ import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 export const Route = createRootRoute({ component: RootComponent });
 
+//Actual main route
 function RootComponent() {
   return (
     <>

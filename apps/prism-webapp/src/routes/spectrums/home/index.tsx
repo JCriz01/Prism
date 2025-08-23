@@ -5,6 +5,8 @@ import { ChannelSidebar } from "@/components/channel-sidebar";
 import { ChatArea } from "@/components/chat-area";
 import { MembersList } from "@/components/members-list";
 import { useState } from "react";
+
+//default screen where no channel is selected
 export const Route = createFileRoute("/spectrums/home/")({
   beforeLoad: async ({ location }) => {
     if (!localStorage.getItem("user-token")) {
@@ -27,10 +29,6 @@ function RouteComponent() {
 
   return (
     <div className="flex h-full items-center justify-start">
-      {/* Server sidebar */}
-      <div className={`${"block"} w-[72px] h-full bg-black `}>
-        <ServerSidebar onServerClick={() => setActiveView("spectrum")} />
-      </div>
       {/* Channel Sidebar */}
       <div className={`${"block"} w-60 h-full bg-slate-900 `}>
         <ChannelSidebar onChannelClick={() => setActiveView("chat")} />

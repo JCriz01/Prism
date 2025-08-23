@@ -8,224 +8,247 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SpectrumsRouteRouteImport } from './routes/spectrums/route'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as SpectrumsIndexRouteImport } from './routes/spectrums/index'
+import { Route as AuthSignupRouteImport } from './routes/auth/signup'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as SpectrumsHomeIndexRouteImport } from './routes/spectrums/home/index'
+import { Route as SpectrumsServerServerIdRouteRouteImport } from './routes/spectrums/server/$serverId/route'
+import { Route as SpectrumsServerServerIdIndexRouteImport } from './routes/spectrums/server/$serverId/index'
+import { Route as SpectrumsServerServerIdChannelChannelIdRouteImport } from './routes/spectrums/server/$serverId/channel/$channelId'
 
-// Import Routes
-
-import { Route as rootRoute } from './routes/__root'
-import { Route as IndexImport } from './routes/index'
-import { Route as SpectrumsRootImport } from './routes/spectrums/_root'
-import { Route as AuthSignupImport } from './routes/auth/signup'
-import { Route as AuthLoginImport } from './routes/auth/login'
-import { Route as SpectrumsHomeIndexImport } from './routes/spectrums/home/index'
-
-// Create Virtual Routes
-
-const SpectrumsImport = createFileRoute('/spectrums')()
-
-// Create/Update Routes
-
-const SpectrumsRoute = SpectrumsImport.update({
+const SpectrumsRouteRoute = SpectrumsRouteRouteImport.update({
   id: '/spectrums',
   path: '/spectrums',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SpectrumsRootRoute = SpectrumsRootImport.update({
-  id: '/_root',
-  getParentRoute: () => SpectrumsRoute,
+const SpectrumsIndexRoute = SpectrumsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SpectrumsRouteRoute,
 } as any)
-
-const AuthSignupRoute = AuthSignupImport.update({
+const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
   path: '/auth/signup',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthLoginRoute = AuthLoginImport.update({
+const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SpectrumsHomeIndexRoute = SpectrumsHomeIndexImport.update({
+const SpectrumsHomeIndexRoute = SpectrumsHomeIndexRouteImport.update({
   id: '/home/',
   path: '/home/',
-  getParentRoute: () => SpectrumsRoute,
+  getParentRoute: () => SpectrumsRouteRoute,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginImport
-      parentRoute: typeof rootRoute
-    }
-    '/auth/signup': {
-      id: '/auth/signup'
-      path: '/auth/signup'
-      fullPath: '/auth/signup'
-      preLoaderRoute: typeof AuthSignupImport
-      parentRoute: typeof rootRoute
-    }
-    '/spectrums': {
-      id: '/spectrums'
-      path: '/spectrums'
-      fullPath: '/spectrums'
-      preLoaderRoute: typeof SpectrumsImport
-      parentRoute: typeof rootRoute
-    }
-    '/spectrums/_root': {
-      id: '/spectrums/_root'
-      path: '/spectrums'
-      fullPath: '/spectrums'
-      preLoaderRoute: typeof SpectrumsRootImport
-      parentRoute: typeof SpectrumsRoute
-    }
-    '/spectrums/home/': {
-      id: '/spectrums/home/'
-      path: '/home'
-      fullPath: '/spectrums/home'
-      preLoaderRoute: typeof SpectrumsHomeIndexImport
-      parentRoute: typeof SpectrumsImport
-    }
-  }
-}
-
-// Create and export the route tree
-
-interface SpectrumsRouteChildren {
-  SpectrumsRootRoute: typeof SpectrumsRootRoute
-  SpectrumsHomeIndexRoute: typeof SpectrumsHomeIndexRoute
-}
-
-const SpectrumsRouteChildren: SpectrumsRouteChildren = {
-  SpectrumsRootRoute: SpectrumsRootRoute,
-  SpectrumsHomeIndexRoute: SpectrumsHomeIndexRoute,
-}
-
-const SpectrumsRouteWithChildren = SpectrumsRoute._addFileChildren(
-  SpectrumsRouteChildren,
-)
+const SpectrumsServerServerIdRouteRoute =
+  SpectrumsServerServerIdRouteRouteImport.update({
+    id: '/server/$serverId',
+    path: '/server/$serverId',
+    getParentRoute: () => SpectrumsRouteRoute,
+  } as any)
+const SpectrumsServerServerIdIndexRoute =
+  SpectrumsServerServerIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => SpectrumsServerServerIdRouteRoute,
+  } as any)
+const SpectrumsServerServerIdChannelChannelIdRoute =
+  SpectrumsServerServerIdChannelChannelIdRouteImport.update({
+    id: '/channel/$channelId',
+    path: '/channel/$channelId',
+    getParentRoute: () => SpectrumsServerServerIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/spectrums': typeof SpectrumsRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/spectrums': typeof SpectrumsRootRoute
+  '/spectrums/': typeof SpectrumsIndexRoute
+  '/spectrums/server/$serverId': typeof SpectrumsServerServerIdRouteRouteWithChildren
   '/spectrums/home': typeof SpectrumsHomeIndexRoute
+  '/spectrums/server/$serverId/': typeof SpectrumsServerServerIdIndexRoute
+  '/spectrums/server/$serverId/channel/$channelId': typeof SpectrumsServerServerIdChannelChannelIdRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/spectrums': typeof SpectrumsRootRoute
+  '/spectrums': typeof SpectrumsIndexRoute
   '/spectrums/home': typeof SpectrumsHomeIndexRoute
+  '/spectrums/server/$serverId': typeof SpectrumsServerServerIdIndexRoute
+  '/spectrums/server/$serverId/channel/$channelId': typeof SpectrumsServerServerIdChannelChannelIdRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/spectrums': typeof SpectrumsRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/spectrums': typeof SpectrumsRouteWithChildren
-  '/spectrums/_root': typeof SpectrumsRootRoute
+  '/spectrums/': typeof SpectrumsIndexRoute
+  '/spectrums/server/$serverId': typeof SpectrumsServerServerIdRouteRouteWithChildren
   '/spectrums/home/': typeof SpectrumsHomeIndexRoute
+  '/spectrums/server/$serverId/': typeof SpectrumsServerServerIdIndexRoute
+  '/spectrums/server/$serverId/channel/$channelId': typeof SpectrumsServerServerIdChannelChannelIdRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
+    | '/spectrums'
+    | '/auth/login'
+    | '/auth/signup'
+    | '/spectrums/'
+    | '/spectrums/server/$serverId'
+    | '/spectrums/home'
+    | '/spectrums/server/$serverId/'
+    | '/spectrums/server/$serverId/channel/$channelId'
+  fileRoutesByTo: FileRoutesByTo
+  to:
     | '/'
     | '/auth/login'
     | '/auth/signup'
     | '/spectrums'
     | '/spectrums/home'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/auth/signup' | '/spectrums' | '/spectrums/home'
+    | '/spectrums/server/$serverId'
+    | '/spectrums/server/$serverId/channel/$channelId'
   id:
     | '__root__'
     | '/'
+    | '/spectrums'
     | '/auth/login'
     | '/auth/signup'
-    | '/spectrums'
-    | '/spectrums/_root'
+    | '/spectrums/'
+    | '/spectrums/server/$serverId'
     | '/spectrums/home/'
+    | '/spectrums/server/$serverId/'
+    | '/spectrums/server/$serverId/channel/$channelId'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SpectrumsRouteRoute: typeof SpectrumsRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
-  SpectrumsRoute: typeof SpectrumsRouteWithChildren
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AuthLoginRoute: AuthLoginRoute,
-  AuthSignupRoute: AuthSignupRoute,
-  SpectrumsRoute: SpectrumsRouteWithChildren,
-}
-
-export const routeTree = rootRoute
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/auth/login",
-        "/auth/signup",
-        "/spectrums"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/auth/login": {
-      "filePath": "auth/login.tsx"
-    },
-    "/auth/signup": {
-      "filePath": "auth/signup.tsx"
-    },
-    "/spectrums": {
-      "filePath": "spectrums",
-      "children": [
-        "/spectrums/_root",
-        "/spectrums/home/"
-      ]
-    },
-    "/spectrums/_root": {
-      "filePath": "spectrums/_root.tsx",
-      "parent": "/spectrums"
-    },
-    "/spectrums/home/": {
-      "filePath": "spectrums/home/index.tsx",
-      "parent": "/spectrums"
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/spectrums': {
+      id: '/spectrums'
+      path: '/spectrums'
+      fullPath: '/spectrums'
+      preLoaderRoute: typeof SpectrumsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spectrums/': {
+      id: '/spectrums/'
+      path: '/'
+      fullPath: '/spectrums/'
+      preLoaderRoute: typeof SpectrumsIndexRouteImport
+      parentRoute: typeof SpectrumsRouteRoute
+    }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/auth/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spectrums/home/': {
+      id: '/spectrums/home/'
+      path: '/home'
+      fullPath: '/spectrums/home'
+      preLoaderRoute: typeof SpectrumsHomeIndexRouteImport
+      parentRoute: typeof SpectrumsRouteRoute
+    }
+    '/spectrums/server/$serverId': {
+      id: '/spectrums/server/$serverId'
+      path: '/server/$serverId'
+      fullPath: '/spectrums/server/$serverId'
+      preLoaderRoute: typeof SpectrumsServerServerIdRouteRouteImport
+      parentRoute: typeof SpectrumsRouteRoute
+    }
+    '/spectrums/server/$serverId/': {
+      id: '/spectrums/server/$serverId/'
+      path: '/'
+      fullPath: '/spectrums/server/$serverId/'
+      preLoaderRoute: typeof SpectrumsServerServerIdIndexRouteImport
+      parentRoute: typeof SpectrumsServerServerIdRouteRoute
+    }
+    '/spectrums/server/$serverId/channel/$channelId': {
+      id: '/spectrums/server/$serverId/channel/$channelId'
+      path: '/channel/$channelId'
+      fullPath: '/spectrums/server/$serverId/channel/$channelId'
+      preLoaderRoute: typeof SpectrumsServerServerIdChannelChannelIdRouteImport
+      parentRoute: typeof SpectrumsServerServerIdRouteRoute
     }
   }
 }
-ROUTE_MANIFEST_END */
+
+interface SpectrumsServerServerIdRouteRouteChildren {
+  SpectrumsServerServerIdIndexRoute: typeof SpectrumsServerServerIdIndexRoute
+  SpectrumsServerServerIdChannelChannelIdRoute: typeof SpectrumsServerServerIdChannelChannelIdRoute
+}
+
+const SpectrumsServerServerIdRouteRouteChildren: SpectrumsServerServerIdRouteRouteChildren =
+  {
+    SpectrumsServerServerIdIndexRoute: SpectrumsServerServerIdIndexRoute,
+    SpectrumsServerServerIdChannelChannelIdRoute:
+      SpectrumsServerServerIdChannelChannelIdRoute,
+  }
+
+const SpectrumsServerServerIdRouteRouteWithChildren =
+  SpectrumsServerServerIdRouteRoute._addFileChildren(
+    SpectrumsServerServerIdRouteRouteChildren,
+  )
+
+interface SpectrumsRouteRouteChildren {
+  SpectrumsIndexRoute: typeof SpectrumsIndexRoute
+  SpectrumsServerServerIdRouteRoute: typeof SpectrumsServerServerIdRouteRouteWithChildren
+  SpectrumsHomeIndexRoute: typeof SpectrumsHomeIndexRoute
+}
+
+const SpectrumsRouteRouteChildren: SpectrumsRouteRouteChildren = {
+  SpectrumsIndexRoute: SpectrumsIndexRoute,
+  SpectrumsServerServerIdRouteRoute:
+    SpectrumsServerServerIdRouteRouteWithChildren,
+  SpectrumsHomeIndexRoute: SpectrumsHomeIndexRoute,
+}
+
+const SpectrumsRouteRouteWithChildren = SpectrumsRouteRoute._addFileChildren(
+  SpectrumsRouteRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  SpectrumsRouteRoute: SpectrumsRouteRouteWithChildren,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
+}
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
