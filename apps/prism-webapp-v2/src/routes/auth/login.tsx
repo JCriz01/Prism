@@ -1,4 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import {
   Card,
@@ -26,6 +30,7 @@ export const Route = createFileRoute("/auth/login")({
 function RouteComponent() {
   const setUser = useUserStore((state) => state.updateUser);
   const navigate = useNavigate();
+  const search = useSearch({ from: "/auth/login" });
   const [error, setError] = useState({
     message: "",
   });
@@ -67,8 +72,9 @@ function RouteComponent() {
         //setting user in userStore
         setUser(data.user);
 
-        //redirecting to actual web application root path.
-        navigate({ to: "/spectrums" });
+        //redirecting to actual web application root path or original destination
+        const redirectTo = (search as any).redirect || "/";
+        navigate({ to: redirectTo as any });
       }
     } catch (error) {
       console.error(error);

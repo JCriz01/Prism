@@ -1,10 +1,28 @@
-import { createFileRoute } from '@tanstack/react-router'
-import logo from '../logo.svg'
-import '../App.css'
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/')({
+import logo from "../logo.svg";
+import "../App.css";
+
+export const Route = createFileRoute("/")({
   component: App,
-})
+  beforeLoad: async ({ location }) => {
+    // Safely check localStorage (only available in browser)
+    let hasToken = false;
+    try {
+      hasToken = !!localStorage.getItem("user-token");
+    } catch (error) {
+      // localStorage not available (e.g., during SSR)
+      console.warn("localStorage not available:", error);
+    }
+
+    if (!hasToken) {
+      throw redirect({
+        to: "/auth/login",
+        search: { redirect: location.pathname },
+      });
+    }
+  },
+});
 
 function App() {
   return (
@@ -32,5 +50,5 @@ function App() {
         </a>
       </header>
     </div>
-  )
+  );
 }
