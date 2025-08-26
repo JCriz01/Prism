@@ -21,7 +21,7 @@ export const prismaClient = new PrismaClient({
   log: ['query', 'info', 'warn'],
 });
 
-const allowedOrigins = ['http://localhost:3001'];
+const allowedOrigins = ['http://localhost:3000'];
 
 //use cors to allow cross origin resource sharing
 app.use(
