@@ -7,9 +7,6 @@ export const Route = createRootRoute({
 });
 
 function RootApp() {
-  //checking to verify if there is a valid token in the localstorage
-  const userToken = localStorage.getItem("user-token");
-
   return (
     <>
       <Outlet />

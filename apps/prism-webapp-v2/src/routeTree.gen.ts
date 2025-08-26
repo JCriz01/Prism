@@ -9,14 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SpectrumsRouteRouteImport } from './routes/spectrums/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SpectrumsIndexRouteImport } from './routes/spectrums/index'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
+const SpectrumsRouteRoute = SpectrumsRouteRouteImport.update({
+  id: '/spectrums',
+  path: '/spectrums',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SpectrumsIndexRoute = SpectrumsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SpectrumsRouteRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
@@ -31,42 +43,68 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/spectrums': typeof SpectrumsRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/spectrums/': typeof SpectrumsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/spectrums': typeof SpectrumsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/spectrums': typeof SpectrumsRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/spectrums/': typeof SpectrumsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/login' | '/auth/signup'
+  fullPaths: '/' | '/spectrums' | '/auth/login' | '/auth/signup' | '/spectrums/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/auth/signup'
-  id: '__root__' | '/' | '/auth/login' | '/auth/signup'
+  to: '/' | '/auth/login' | '/auth/signup' | '/spectrums'
+  id:
+    | '__root__'
+    | '/'
+    | '/spectrums'
+    | '/auth/login'
+    | '/auth/signup'
+    | '/spectrums/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SpectrumsRouteRoute: typeof SpectrumsRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/spectrums': {
+      id: '/spectrums'
+      path: '/spectrums'
+      fullPath: '/spectrums'
+      preLoaderRoute: typeof SpectrumsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/spectrums/': {
+      id: '/spectrums/'
+      path: '/'
+      fullPath: '/spectrums/'
+      preLoaderRoute: typeof SpectrumsIndexRouteImport
+      parentRoute: typeof SpectrumsRouteRoute
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -85,8 +123,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SpectrumsRouteRouteChildren {
+  SpectrumsIndexRoute: typeof SpectrumsIndexRoute
+}
+
+const SpectrumsRouteRouteChildren: SpectrumsRouteRouteChildren = {
+  SpectrumsIndexRoute: SpectrumsIndexRoute,
+}
+
+const SpectrumsRouteRouteWithChildren = SpectrumsRouteRoute._addFileChildren(
+  SpectrumsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SpectrumsRouteRoute: SpectrumsRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
 }

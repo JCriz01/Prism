@@ -20,6 +20,11 @@ export const Route = createFileRoute("/")({
         to: "/auth/login",
         search: { redirect: location.pathname },
       });
+    } else {
+      throw redirect({
+        to: "/spectrums",
+        search: { redirect: location.pathname },
+      });
     }
   },
 });
