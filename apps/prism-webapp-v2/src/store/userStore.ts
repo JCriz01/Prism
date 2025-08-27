@@ -13,7 +13,8 @@ type State = {
 };
 
 type Action = {
-  updateUser: (partialUser: Partial<State>) => void;
+  updateUser: (partialUser: Partial<State["user"]>) => void;
+  clearUser: () => void;
 };
 
 export const useUserStore = create<State & Action>()(
@@ -29,9 +30,19 @@ export const useUserStore = create<State & Action>()(
     updateUser: (partialUser) =>
       set((state) => {
         // Update the user state with the partial user data
-        //TODO: Check if this implementation is correct
-        state.user = { ...state.user, ...partialUser };
+        Object.assign(state.user, partialUser);
         console.log("User updated:", state.user);
+      }),
+    clearUser: () =>
+      set((state) => {
+        state.user = {
+          username: "",
+          name: "",
+          password: "",
+          email: "",
+          avatar: "",
+          bio: "",
+        };
       }),
   }))
 );

@@ -3,6 +3,9 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import logo from "../logo.svg";
 import "../App.css";
 
+//* Root page, which is the first page that renders assuming that the auth logic is not rendering.
+// TODO: Maybe make this into a info page for the app that showcases features and other things?
+
 export const Route = createFileRoute("/")({
   component: App,
   beforeLoad: async ({ location }) => {
