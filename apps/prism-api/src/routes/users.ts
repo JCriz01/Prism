@@ -4,11 +4,15 @@ import {
   registerUser,
   loginUser,
   logoutUser,
-  sendFriendRequest,
-  acceptFriendRequest,
-  removeFriend,
-  getFriendsList,
 } from '../controllers/usersController';
+import {
+  requestFriendship,
+  viewSentFriendRequests,
+  viewReceivedFriendRequests,
+  acceptFriendRequest,
+  viewFriendsList,
+  removeFriend,
+} from '../controllers/usersFriendController';
 const router = express.Router();
 
 /* POST register user */
@@ -29,11 +33,27 @@ router.get(
 /* POST logout user */
 router.post('/logout', logoutUser);
 
+//** Friend Management */
+
 /* PUT add/remove friend(user) */
 router.put(
-  '/friend/send/:id',
+  '/friend/send-request/:id',
   passport.authenticate('jwt', { session: false }),
-  sendFriendRequest,
+  requestFriendship,
+);
+
+/* GET view pending friend requests */
+router.get(
+  '/friend/sent-pending-requests',
+  passport.authenticate('jwt', { session: false }),
+  viewSentFriendRequests,
+);
+
+/* GET view received friend requests */
+router.get(
+  '/friend/received-pending-requests',
+  passport.authenticate('jwt', { session: false }),
+  viewReceivedFriendRequests,
 );
 
 /* PATCH accept friend request */
@@ -43,18 +63,18 @@ router.patch(
   acceptFriendRequest,
 );
 
+/* GET view friends list */
+router.get(
+  '/friends/',
+  passport.authenticate('jwt', { session: false }),
+  viewFriendsList,
+);
+
 /* DELETE remove friend(user) */
 router.delete(
   '/friend/remove/:id',
   passport.authenticate('jwt', { session: false }),
   removeFriend,
-);
-
-/* GET friend list */
-router.get(
-  '/friends',
-  passport.authenticate('jwt', { session: false }),
-  getFriendsList,
 );
 
 export default router;

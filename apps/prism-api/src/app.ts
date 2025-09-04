@@ -9,7 +9,8 @@ import serverRouter from './routes/servers';
 import { PrismaClient } from '@prisma/client';
 import passport from './utils/passport';
 const session = require('express-session');
-import { notFoundHandler, errorHandler } from './middleware/errorHandler';
+import { notFoundHandler } from './middleware/errorHandler';
+import { errorHandler } from './middleware/error-handler';
 import helmet from 'helmet';
 import cors from 'cors';
 import http from 'http';
@@ -61,6 +62,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/server', serverRouter);
 
 app.use(notFoundHandler);
+//app.use(errorHandler);
 app.use(errorHandler);
 
 export default app;

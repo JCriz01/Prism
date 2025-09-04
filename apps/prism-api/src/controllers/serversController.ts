@@ -2,7 +2,7 @@ import { prismaClient as prisma } from '../app';
 import { issueJWT } from '../utils/issueJWT';
 import { NextFunction, Response, Request } from 'express';
 import registerSchema from '../schema/registerSchema';
-import { User, Server } from '@prisma/client';
+import { User, Spectrum } from '@prisma/client';
 const debug = require('debug')('prism-api:server');
 
 //**Shared Server CRUD operations */
@@ -14,17 +14,13 @@ export const getServerById = async (
 ): Promise<any> => {
   try {
     const { id } = req.params;
-    const server = await prisma.server.findUnique({
+    const server = await prisma.spectrum.findUnique({
       where: {
         id: id,
       },
       include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
+        roles: true,
+        channels: true,
       },
     });
     if (!server) {
@@ -45,24 +41,16 @@ export const getServers = async (
 ): Promise<any> => {
   try {
     const currentUser = req.user as User;
-    const servers = await prisma.server.findMany({
+    const servers = await prisma.spectrum.findMany({
       where: {
         OR: [
           {
             ownerId: currentUser.id,
           },
-          {
-            userId: currentUser.id,
-          },
         ],
       },
       include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
+        members: true,
       },
     });
     return res.status(200).json({ servers });
@@ -83,22 +71,16 @@ export const joinServerByName = async (
   try {
     const { name } = req.params;
     const currentUser = req.user as User;
-    const server = await prisma.server.findFirst({
+    const server = await prisma.spectrum.findFirst({
       where: { name: name },
     });
     if (!server) {
       return res.status(404).json({ message: 'Server not found' });
     }
     //found server, now add user to server
-    await prisma.server.update({
+    await prisma.spectrum.update({
       where: { id: server.id },
-      data: {
-        users: {
-          connect: {
-            id: currentUser.id,
-          },
-        },
-      },
+      data: {},
     });
   } catch (error) {
     debug(error);
@@ -115,18 +97,11 @@ export const joinServer = async (
     const { id } = req.params;
     const currentUser = req.user as User;
 
-    const server = await prisma.server.findUnique({
+    const server = await prisma.spectrum.findUnique({
       where: {
         id: id,
       },
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
+      include: {},
     });
     console.log(server);
     if (!server) {
@@ -137,6 +112,7 @@ export const joinServer = async (
     next(error);
   }
 };
+
 //**Server Admin CRUD operations */
 //* Create a new server
 export const createServer = async (
@@ -147,12 +123,10 @@ export const createServer = async (
   try {
     const currentUser = req.user as User;
     const { name, description } = req.body;
-    const server = await prisma.server.create({
+    const server = await prisma.spectrum.create({
       data: {
         ownerId: currentUser.id,
-        userId: currentUser.id,
         name,
-        description,
       },
     });
     return res
@@ -174,14 +148,13 @@ export const updateServer = async (
     const { id } = req.params;
     const currentUser = req.user as User;
     const { name, description, icon } = req.body;
-    const updatedServer = await prisma.server.update({
+    const updatedServer = await prisma.spectrum.update({
       where: {
         id: id,
         ownerId: currentUser.id,
       },
       data: {
         name,
-        description,
       },
     });
 
@@ -205,7 +178,7 @@ export const deleteServer = async (
   try {
     const { id } = req.params;
     const currentUser = req.user as User;
-    const server = await prisma.server.delete({
+    const server = await prisma.spectrum.delete({
       where: {
         id: id,
         ownerId: currentUser.id,
