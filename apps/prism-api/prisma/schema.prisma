@@ -1,8 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// prisma/schema.prisma
+// Optimized, relational design for Discord‑style operations with strong referential integrity
+// Target DB: PostgreSQL (recommended). Uses bigint for permission bitfields and
+// cascading deletes for dependent records.
 
 generator client {
   provider = "prisma-client-js"
@@ -13,74 +12,302 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ChannelType {
+  SPECTRUM_TEXT
+  SPECTRUM_VOICE
+  SPECTRUM_CATEGORY
+  SPECTRUM_STAGE
+  SPECTRUM_FORUM
+  SPECTRUM_ANNOUNCEMENT
+  THREAD_PUBLIC
+  THREAD_PRIVATE
+  DM
+  GROUP_DM
+}
+
+enum OverwriteTargetType {
+  ROLE
+  USER
+}
+
+enum MessageType {
+  DEFAULT
+  REPLY
+  SYSTEM
+}
+
 model User {
-  id String @id @default(uuid())
-  name      String
-  username  String   @unique
-  email     String   @unique
-  password  String
-  avatar    String   @default("")
-  bio       String   @default("")
-  Servers  Server[] @relation("Users")
-  owner  Server[] @relation("Owner")
-  channelMessages ChannelMessage[]
-  sentFriendRequests Friend[] @relation("sentRequests")
-  receivedFriendRequests Friend[] @relation("receivedRequests")
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  name      String  @default("John Doe")
+  username  String
+  avatarUrl String? @db.Text
+  email     String? @unique
+  password  String
+
+  ownedSpectrums      Spectrum[]            @relation("SpectrumOwner")
+  memberships         SpectrumMember[]
+  messages            Message[]             @relation("AuthorMessages")
+  invites             Invite[]              @relation("InviterInvites")
+  reactions           MessageReaction[]
+  channels            Channel[]             @relation("ChannelCreator")
+  PermissionOverwrite PermissionOverwrite[]
+
+  sentFriendRequests     Friendship[] @relation("FriendRequester")
+  receiverFriendRequests Friendship[] @relation("FriendAddressee")
+
+  @@index([username])
 }
 
-model Friend {
-  id String @id @default(uuid())
-  senderId String
-  receiverId String
-  status FriendStatus @default(PENDING)
+model Friendship {
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  sender User @relation("sentRequests", fields: [senderId], references: [id])
-  receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
+  requesterId String
+  addresseeId String
 
-  @@unique([senderId, receiverId])
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status FriendshipStatus @default(PENDING)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
 }
 
-model Server {
-  id String @id @default(uuid())
-  name String 
-  description String
-  users User @relation("Users",fields: [userId], references: [id])
-  userId String
-  owner User @relation("Owner",fields: [ownerId], references: [id])
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Spectrum {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name    String
+  iconUrl String? @db.Text
   ownerId String
-  icon String @default("")
+  owner   User    @relation("SpectrumOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  members  SpectrumMember[]
+  roles    Role[]
   channels Channel[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  emojis   Emoji[]
+  invites  Invite[]
+
+  defaultNotifications Boolean @default(true)
+
+  @@index([ownerId])
+  @@index([name])
+}
+
+model SpectrumMember {
+  userId     String
+  spectrumId String
+  id         String @id @default(cuid())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spectrum Spectrum @relation(fields: [spectrumId], references: [id], onDelete: Cascade)
+
+  nickname   String?
+  joinedAt   DateTime @default(now())
+  isMuted    Boolean  @default(false)
+  isDeafened Boolean  @default(false)
+
+  roles SpectrumMemberRole[]
+
+  messages Message[] @relation("MemberMessages")
+
+  @@unique([userId, spectrumId])
+  @@index([spectrumId])
+  @@index([userId])
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  spectrumId String
+  spectrum   Spectrum @relation(fields: [spectrumId], references: [id], onDelete: Cascade)
+
+  name        String
+  color       Int     @default(0)
+  position    Int     @default(0)
+  hoist       Boolean @default(false)
+  mentionable Boolean @default(false)
+  permissions BigInt  @default(0)
+
+  members    SpectrumMemberRole[]
+  overwrites PermissionOverwrite[]
+
+  @@unique([spectrumId, name])
+  @@index([spectrumId, position])
+}
+
+model SpectrumMemberRole {
+  id       String @id @default(cuid())
+  memberId String
+  roleId   String
+
+  member SpectrumMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role   Role           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, roleId])
+  @@index([roleId])
 }
 
 model Channel {
-  id String @id @default(uuid())
-  name String
-  description String
-  server Server @relation(fields: [serverId], references: [id])
-  serverId String
-  channelMessages ChannelMessage[]
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  type ChannelType
+
+  spectrumId String?
+  spectrum   Spectrum? @relation(fields: [spectrumId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Channel?  @relation("ChannelToChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children Channel[] @relation("ChannelToChildren")
+
+  name             String
+  topic            String? @db.Text
+  position         Int     @default(0)
+  nsfw             Boolean @default(false)
+  rateLimitPerUser Int?
+
+  createdById String?
+  createdBy   User?   @relation("ChannelCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  messages   Message[]
+  overwrites PermissionOverwrite[]
+  invites    Invite[]
+
+  @@index([spectrumId, type, position])
+  @@index([parentId])
 }
 
-model ChannelMessage {
-  id String @id @default(uuid())
-  message String
-  user User @relation(fields: [userId], references: [id])
-  userId String
-  channel Channel @relation(fields: [channelId], references: [id])
+model PermissionOverwrite {
+  id        String  @id @default(cuid())
   channelId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  targetType OverwriteTargetType
+
+  targetRoleId String?
+  targetUserId String?
+
+  role Role? @relation(fields: [targetRoleId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  allow BigInt @default(0)
+  deny  BigInt @default(0)
+
+  @@unique([channelId, targetRoleId])
+  @@unique([channelId, targetUserId])
+  @@index([channelId])
 }
 
-enum FriendStatus {
-  ACCEPTED
-  PENDING
-  DECLINED
+model Message {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("AuthorMessages", fields: [authorId], references: [id], onDelete: Cascade)
+
+  memberId String?
+  member   SpectrumMember? @relation("MemberMessages", fields: [memberId], references: [id], onDelete: SetNull)
+
+  type    MessageType @default(DEFAULT)
+  content String?     @db.Text
+  pinned  Boolean     @default(false)
+
+  referencedMessageId String?
+  referencedMessage   Message?  @relation("MessageReplies", fields: [referencedMessageId], references: [id], onDelete: SetNull)
+  replies             Message[] @relation("MessageReplies")
+
+  attachments Attachment[]
+  reactions   MessageReaction[]
+
+  @@index([channelId, createdAt])
+  @@index([authorId])
+}
+
+model Attachment {
+  id        String  @id @default(cuid())
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  url         String  @db.Text
+  fileName    String
+  contentType String?
+  sizeBytes   Int
+
+  width  Int?
+  height Int?
+
+  @@index([messageId])
+}
+
+model Emoji {
+  id         String   @id @default(cuid())
+  spectrumId String
+  spectrum   Spectrum @relation(fields: [spectrumId], references: [id], onDelete: Cascade)
+
+  name     String
+  imageUrl String  @db.Text
+  animated Boolean @default(false)
+
+  reactions MessageReaction[]
+
+  @@unique([spectrumId, name])
+  @@index([spectrumId])
+}
+
+model MessageReaction {
+  id        String  @id @default(cuid())
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emojiId String?
+  emoji   Emoji?  @relation(fields: [emojiId], references: [id], onDelete: Cascade)
+
+  unicode String?
+
+  @@unique([messageId, userId, emojiId, unicode])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model Invite {
+  code      String   @id
+  createdAt DateTime @default(now())
+
+  spectrumId String
+  spectrum   Spectrum @relation(fields: [spectrumId], references: [id], onDelete: Cascade)
+
+  channelId String?
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  inviterId String?
+  inviter   User?   @relation("InviterInvites", fields: [inviterId], references: [id], onDelete: SetNull)
+
+  uses      Int       @default(0)
+  maxUses   Int?
+  expiresAt DateTime?
+
+  @@index([spectrumId])
 }
