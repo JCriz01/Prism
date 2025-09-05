@@ -145,27 +145,17 @@ export const updateUser = asyncHandler(
 //* Delete user
 export const deleteUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    try {
-      const id = req.params.id;
-      await prisma.user.delete({ where: { id } });
-      res.status(200).json({ message: 'User deleted successfully' });
-    } catch (error) {
-      debug(error);
-      next(Error('An error occurred while deleting user'));
-    }
+    const id = req.params.id;
+    await prisma.user.delete({ where: { id } });
+    res.status(200).json({ message: 'User deleted successfully' });
   },
 );
 
 //* Logout user from application
 export const logoutUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    try {
-      console.log('req.user', req.user);
-      res.cookie('jwt', '', { maxAge: 1 });
-      res.status(200).json({ message: 'User logged out successfully' });
-    } catch (error) {
-      debug(error);
-      next(Error('An error occurred while logging out'));
-    }
+    console.log('req.user', req.user);
+    res.cookie('jwt', '', { maxAge: 1 });
+    res.status(200).json({ message: 'User logged out successfully' });
   },
 );
