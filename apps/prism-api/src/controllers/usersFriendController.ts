@@ -7,7 +7,7 @@ import { badRequest, forbidden, notFound } from '../errors/app-error';
 const debug = require('debug')('prism-api:server');
 
 //** Friend Management **/
-//*Send Friend Request
+//*Send Friend Request(add friend)
 export const requestFriendship = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const currentUser = req.user as User;
@@ -26,25 +26,31 @@ export const requestFriendship = asyncHandler(
       throw notFound('User not found');
     }
 
-    //TODO: Check if the friend request already exists
+    //TODO: Check if the user is already friends with the current user
 
-    await prisma.friendship.create({
-      data: {
-        status: 'PENDING',
-        requester: { connect: { id: currentUser.id } },
-        addressee: { connect: { id: addresseeId } },
-      },
-      include: {
-        requester: { select: { id: true, username: true } },
-        addressee: { select: { id: true, username: true } },
-      },
-    });
+    await prisma.$transaction([
+      prisma.friendship.upsert({
+        where: {
+          ownerId_friendId: { ownerId: currentUser.id, friendId: addresseeId },
+        },
+        update: {},
+        create: { ownerId: currentUser.id, friendId: addresseeId },
+      }),
+      prisma.friendship.upsert({
+        where: {
+          ownerId_friendId: { ownerId: currentUser.id, friendId: addresseeId },
+        },
+        update: {},
+        create: { ownerId: currentUser.id, friendId: addresseeId },
+      }),
+    ]);
 
     res.status(200).json({ message: 'Friend request sent successfully' });
   },
 );
 
 //* View PENDING Friend Requests
+/*
 export const viewSentFriendRequests = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const currentUser = req.user as User;
@@ -124,7 +130,7 @@ export const acceptFriendRequest = asyncHandler(
     res.status(200).json({ message: 'Friend request accepted successfully' });
   },
 );
-
+*/
 //* View Friends List
 
 //TODO: refactor this to skip users that are ourselves
@@ -133,12 +139,10 @@ export const viewFriendsList = asyncHandler(
     const currentUser = req.user as User;
     const friends = await prisma.friendship.findMany({
       where: {
-        status: 'ACCEPTED',
-        OR: [{ requesterId: currentUser.id }, { addresseeId: currentUser.id }],
+        ownerId: currentUser.id,
       },
       include: {
-        requester: true,
-        addressee: true,
+        friend: true,
       },
     });
 
@@ -156,14 +160,18 @@ export const removeFriend = asyncHandler(
     const currentUser = req.user as User;
     const friendId = req.params.id;
 
-    await prisma.friendship.delete({
-      where: {
-        requesterId_addresseeId: {
-          requesterId: currentUser.id,
-          addresseeId: friendId,
+    await prisma.$transaction([
+      prisma.friendship.delete({
+        where: {
+          ownerId_friendId: { ownerId: currentUser.id, friendId: friendId },
         },
-      },
-    });
+      }),
+      prisma.friendship.delete({
+        where: {
+          ownerId_friendId: { ownerId: currentUser.id, friendId: friendId },
+        },
+      }),
+    ]);
 
     res.status(200).json({ message: 'Friend removed successfully' });
   },

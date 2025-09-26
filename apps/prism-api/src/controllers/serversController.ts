@@ -304,6 +304,7 @@ export const createChannel = asyncHandler(
     const currentUser = req.user as User;
 
     const { channelId, channelType, channelName } = req.body;
+
     //Check if the server exists
     const server = await prisma.spectrum.findUnique({
       where: { id: serverId },

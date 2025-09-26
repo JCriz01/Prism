@@ -7,9 +7,6 @@ import {
 } from '../controllers/usersController';
 import {
   requestFriendship,
-  viewSentFriendRequests,
-  viewReceivedFriendRequests,
-  acceptFriendRequest,
   viewFriendsList,
   removeFriend,
 } from '../controllers/usersFriendController';
@@ -42,27 +39,25 @@ router.put(
   requestFriendship,
 );
 
-/* GET view pending friend requests */
+/*
 router.get(
   '/friend/sent-pending-requests',
   passport.authenticate('jwt', { session: false }),
   viewSentFriendRequests,
 );
 
-/* GET view received friend requests */
 router.get(
   '/friend/received-pending-requests',
   passport.authenticate('jwt', { session: false }),
   viewReceivedFriendRequests,
 );
 
-/* PATCH accept friend request */
 router.patch(
   '/friend/accept/:id',
   passport.authenticate('jwt', { session: false }),
   acceptFriendRequest,
 );
-
+*/
 /* GET view friends list */
 router.get(
   '/friends/',

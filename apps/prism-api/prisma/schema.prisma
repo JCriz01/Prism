@@ -55,9 +55,9 @@ model User {
   channels            Channel[]             @relation("ChannelCreator")
   PermissionOverwrite PermissionOverwrite[]
 
-  sentFriendRequests     Friendship[] @relation("FriendRequester")
-  receiverFriendRequests Friendship[] @relation("FriendAddressee")
-
+  // Friend list (mirrored row from Friendship table)
+  friends           Friendship[]      @relation("UserFriendsOwner")
+  friendOf          Friendship[]      @relation("UserFriendsFriend")
   @@index([username])
 }
 
@@ -65,17 +65,17 @@ model Friendship {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  requesterId String
-  addresseeId String
+  ownerId String
+  friendId String
 
-  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  owner User @relation("UserFriendsOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friend User @relation("UserFriendsFriend", fields: [friendId], references: [id], onDelete: Cascade)
 
   status FriendshipStatus @default(PENDING)
 
-  @@unique([requesterId, addresseeId])
-  @@index([requesterId])
-  @@index([addresseeId])
+  @@unique([ownerId, friendId])
+  @@index([ownerId])
+  @@index([friendId])
 }
 
 enum FriendshipStatus {
