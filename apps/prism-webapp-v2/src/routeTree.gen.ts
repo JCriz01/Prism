@@ -15,6 +15,7 @@ import { Route as SpectrumsIndexRouteImport } from './routes/spectrums/index'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as SpectrumsSpectrumIdIndexRouteImport } from './routes/spectrums/$spectrumId/index'
+import { Route as SpectrumsSpectrumIdChannelIdIndexRouteImport } from './routes/spectrums/$spectrumId/$channelId/index'
 
 const SpectrumsRouteRoute = SpectrumsRouteRouteImport.update({
   id: '/spectrums',
@@ -47,6 +48,12 @@ const SpectrumsSpectrumIdIndexRoute =
     path: '/$spectrumId/',
     getParentRoute: () => SpectrumsRouteRoute,
   } as any)
+const SpectrumsSpectrumIdChannelIdIndexRoute =
+  SpectrumsSpectrumIdChannelIdIndexRouteImport.update({
+    id: '/$spectrumId/$channelId/',
+    path: '/$spectrumId/$channelId/',
+    getParentRoute: () => SpectrumsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -55,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/spectrums/': typeof SpectrumsIndexRoute
   '/spectrums/$spectrumId': typeof SpectrumsSpectrumIdIndexRoute
+  '/spectrums/$spectrumId/$channelId': typeof SpectrumsSpectrumIdChannelIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +70,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/spectrums': typeof SpectrumsIndexRoute
   '/spectrums/$spectrumId': typeof SpectrumsSpectrumIdIndexRoute
+  '/spectrums/$spectrumId/$channelId': typeof SpectrumsSpectrumIdChannelIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +80,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/spectrums/': typeof SpectrumsIndexRoute
   '/spectrums/$spectrumId/': typeof SpectrumsSpectrumIdIndexRoute
+  '/spectrums/$spectrumId/$channelId/': typeof SpectrumsSpectrumIdChannelIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +91,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/spectrums/'
     | '/spectrums/$spectrumId'
+    | '/spectrums/$spectrumId/$channelId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -88,6 +99,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/spectrums'
     | '/spectrums/$spectrumId'
+    | '/spectrums/$spectrumId/$channelId'
   id:
     | '__root__'
     | '/'
@@ -96,6 +108,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/spectrums/'
     | '/spectrums/$spectrumId/'
+    | '/spectrums/$spectrumId/$channelId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -149,17 +162,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpectrumsSpectrumIdIndexRouteImport
       parentRoute: typeof SpectrumsRouteRoute
     }
+    '/spectrums/$spectrumId/$channelId/': {
+      id: '/spectrums/$spectrumId/$channelId/'
+      path: '/$spectrumId/$channelId'
+      fullPath: '/spectrums/$spectrumId/$channelId'
+      preLoaderRoute: typeof SpectrumsSpectrumIdChannelIdIndexRouteImport
+      parentRoute: typeof SpectrumsRouteRoute
+    }
   }
 }
 
 interface SpectrumsRouteRouteChildren {
   SpectrumsIndexRoute: typeof SpectrumsIndexRoute
   SpectrumsSpectrumIdIndexRoute: typeof SpectrumsSpectrumIdIndexRoute
+  SpectrumsSpectrumIdChannelIdIndexRoute: typeof SpectrumsSpectrumIdChannelIdIndexRoute
 }
 
 const SpectrumsRouteRouteChildren: SpectrumsRouteRouteChildren = {
   SpectrumsIndexRoute: SpectrumsIndexRoute,
   SpectrumsSpectrumIdIndexRoute: SpectrumsSpectrumIdIndexRoute,
+  SpectrumsSpectrumIdChannelIdIndexRoute:
+    SpectrumsSpectrumIdChannelIdIndexRoute,
 }
 
 const SpectrumsRouteRouteWithChildren = SpectrumsRouteRoute._addFileChildren(

@@ -1,3 +1,3 @@
 import { atom } from "jotai";
 
-export const selectedServerAtom = atom<number | null>(null);
+export const selectedServerAtom = atom<string | null>(null);

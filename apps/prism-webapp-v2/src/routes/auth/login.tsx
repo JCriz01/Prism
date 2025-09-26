@@ -23,12 +23,15 @@ import { z } from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { loginFn } from "@/lib/api/auth";
 export const Route = createFileRoute("/auth/login")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const setUser = useUserStore((state) => state.updateUser);
+  const user = useUserStore((state) => state.user);
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth/login" });
   const [error, setError] = useState({
@@ -47,41 +50,42 @@ function RouteComponent() {
     },
   });
 
-  const submitHandler = async (formData: z.infer<typeof loginSchema>) => {
-    try {
-      const res = await fetch("http://localhost:5200/api/users/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-        }),
+  const queryClient = useQueryClient();
+
+  const loginMutation = useMutation({
+    mutationFn: loginFn,
+    retry: 0,
+    onSuccess: (data) => {
+      localStorage.setItem("user-token", data.token);
+
+      queryClient.setQueryData(["auth", "session"], data.user);
+
+      setUser({
+        username: data.user.username,
+        name: data.user.name,
+        email: data.user.email,
+        avatar: data.user.avatarUrl || "",
       });
 
-      const data = await res.json();
-      console.log(data);
-
-      //store Token in local storage
-      if (data.token) {
-        localStorage.setItem("user-token", data.token);
-        console.log("setting user token, ", data.token);
-
-        //setting user in userStore
-        setUser(data.user);
-
-        //redirecting to actual web application root path or original destination
-        const redirectTo = (search as any).redirect || "/";
-        navigate({ to: redirectTo as any });
-      }
-    } catch (error) {
-      console.error(error);
+      console.log("user now is:", user);
+      const redirectTo = (search as any).redirect || "/";
+      navigate({ to: redirectTo as any });
+    },
+    onError: (error) => {
       setError({
-        message: "Invalid username or password",
+        message: error.message,
       });
-    }
+    },
+  });
+
+  console.log("user is:", user);
+
+  const submitHandler = async (formData: z.infer<typeof loginSchema>) => {
+    setError({ message: "" });
+    loginMutation.mutate({
+      username: formData.username,
+      password: formData.password,
+    });
   };
 
   console.log("errors", errors);
@@ -146,16 +150,16 @@ function RouteComponent() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-rose-500 hover:bg-rose-700 text-white"
+              className="w-full bg-rose-500 hover:bg-rose-700 text-white py-2"
             >
-              Log In
+              {loginMutation.isPending ? "Logging in..." : "Log In"}
             </Button>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="remember"
                 className="border-[#72767d] data-[state=checked]:bg-[#5865f2] data-[state=checked]:border-[#5865f2]"
               />
-              <Label htmlFor="remember" className="text-sm text-[#b9bbbe]">
+              <Label htmlFor="remember" className="text-sm text-[#b9bbbe] py-2">
                 Remember me
               </Label>
             </div>
@@ -170,6 +174,7 @@ function RouteComponent() {
           </div>
           <Separator className="bg-[#42464d]" />
           <div className="flex justify-center space-x-4">
+            {/*
             <Link
               to="/terms"
               className="text-xs text-[#b9bbbe] hover:underline"
@@ -182,6 +187,7 @@ function RouteComponent() {
             >
               Privacy Policy
             </Link>
+            */}
           </div>
         </CardFooter>
       </Card>

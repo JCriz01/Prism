@@ -13,6 +13,7 @@ export const Route = createFileRoute("/")({
     let hasToken = false;
     try {
       hasToken = !!localStorage.getItem("user-token");
+      console.log("hasToken:", hasToken);
     } catch (error) {
       // localStorage not available (e.g., during SSR)
       console.warn("localStorage not available:", error);

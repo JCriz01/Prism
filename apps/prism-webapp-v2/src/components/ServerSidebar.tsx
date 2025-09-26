@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { Plus, Hash, Volume2, Settings, Crown } from "lucide-react";
 import { UserAccount } from "./UserAccount";
-import { Link } from "@tanstack/react-router";
+import {
+  Link,
+  useMatch,
+  useParams,
+  useRouterState,
+} from "@tanstack/react-router";
+import { useUserStore } from "@/store/userStore";
+import { useQuery } from "@tanstack/react-query";
+import { LoadingFallback } from "./LoadingFallback";
 
 interface ServerSidebarProps {
   selectedServer: string | null;
@@ -22,45 +30,36 @@ interface Channel {
   type: "text" | "voice";
 }
 
-// Mock data - in a real app this would come from an API
-const mockServers: Server[] = [
-  {
-    id: "1",
-    name: "Gaming Hub",
-    icon: "🎮",
-    channels: [
-      { id: "1-1", name: "general", type: "text" },
-      { id: "1-2", name: "gaming-chat", type: "text" },
-      { id: "1-3", name: "voice-chat", type: "voice" },
-    ],
-  },
-  {
-    id: "2",
-    name: "Study Group",
-    icon: "📚",
-    channels: [
-      { id: "2-1", name: "general", type: "text" },
-      { id: "2-2", name: "homework-help", type: "text" },
-      { id: "2-3", name: "study-sessions", type: "voice" },
-    ],
-  },
-  {
-    id: "3",
-    name: "Music Lovers",
-    icon: "🎵",
-    channels: [
-      { id: "3-1", name: "general", type: "text" },
-      { id: "3-2", name: "music-chat", type: "text" },
-      { id: "3-3", name: "music-room", type: "voice" },
-    ],
-  },
-];
-
 export function ServerSidebar({
   selectedServer,
   onServerSelect,
   onChannelSelect,
 }: ServerSidebarProps) {
+  const user = useUserStore((state) => state.user);
+
+  const serverData = useQuery({
+    queryKey: ["servers"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("http://localhost:5200/api/server/list", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("user-token")}`,
+          },
+        });
+        return res.json();
+      } catch (error) {
+        console.error("Error fetching server data:", error);
+        return null;
+      }
+    },
+  });
+
+  console.log("Running ServerSidebar: user>", user);
+  console.log("Running ServerSidebar: serverData>", serverData);
+
+  const { spectrumId } = useParams({ strict: false });
+  const { channelId } = useParams({ strict: false });
+
   const [expandedServers, setExpandedServers] = useState<Set<string>>(
     new Set(["1"])
   );
@@ -82,63 +81,92 @@ export function ServerSidebar({
     }
   };
 
+  if (serverData.data) {
+  }
+
   return (
-    <div className="w-60 bg-[#2f3136] flex flex-col">
+    <nav aria-label="Servers" className="w-60 bg-[#2f3136] flex flex-col">
       <h1 className="self-center">
         <Link to="/spectrums">Prism</Link>
       </h1>
-      {/* Server List */}
-      <div className="flex-1 p-3 space-y-2">
-        {mockServers.map((server) => (
-          <div key={server.id} className="space-y-1">
-            {/* Server Header */}
-            <div
-              className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-[#40444b] transition-colors ${
-                selectedServer === server.id ? "bg-[#40444b]" : ""
-              }`}
-              onClick={() => handleServerClick(server.id)}
-            >
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-[#5865f2] rounded-full flex items-center justify-center text-white font-bold">
-                  {server.icon}
-                </div>
-                <span className="font-medium">{server.name}</span>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleServer(server.id);
-                }}
-                className="text-gray-400 hover:text-white"
-              >
-                {expandedServers.has(server.id) ? "▼" : "▶"}
-              </button>
-            </div>
 
-            {/* Channels */}
-            {expandedServers.has(server.id) && (
-              <div className="ml-6 space-y-1">
-                {server.channels.map((channel) => (
-                  <div
-                    key={channel.id}
-                    className="flex items-center space-x-2 p-2 rounded-md cursor-pointer hover:bg-[#40444b] transition-colors"
-                    onClick={() => onChannelSelect(channel.id)}
+      {/* Server List */}
+      {serverData.isLoading && (
+        <div className="flex-1 p-3 space-y-2 self-center">
+          Loading servers...
+        </div>
+      )}
+      {serverData.data && (
+        <ul className="flex-1 p-3 space-y-2">
+          {serverData.data.servers.map((serverObj) => {
+            const expanded = spectrumId === serverObj.spectrumId;
+            return (
+              <li key={serverObj.spectrumId} className="space-y-1">
+                {/* Server Header */}
+                <div
+                  className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-[#40444b] transition-colors ${
+                    expanded ? "bg-[#40444b]" : ""
+                  }`}
+                  onClick={() => handleServerClick(serverObj.spectrumId)}
+                >
+                  <Link
+                    className="flex items-center space-x-2 flex-1 block"
+                    to={`/spectrums/${serverObj.spectrumId}`}
                   >
-                    {channel.type === "text" ? (
-                      <Hash className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <Volume2 className="w-4 h-4 text-gray-400" />
-                    )}
-                    <span className="text-sm text-gray-300">
-                      {channel.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-[#5865f2] rounded-full flex items-center justify-center text-white font-bold">
+                        {serverObj.spectrum.iconUrl}
+                      </div>
+                      <span className="font-medium">
+                        {serverObj.spectrum.name}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleServer(serverObj.spectrumId);
+                      }}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      {expanded ? "▼" : "▶"}
+                    </button>
+                  </Link>
+                </div>
+
+                {/* Channels */}
+                {expanded && (
+                  <ul role="group" className="ml-6 space-y-1">
+                    {serverObj.spectrum.channels?.map((channel) => {
+                      const active = channelId == channel.id;
+                      return (
+                        <li
+                          key={channel.id}
+                          onClick={() => onChannelSelect(channel.id)}
+                        >
+                          <Link
+                            className="flex items-center space-x-2 p-2 rounded-md cursor-pointer hover:bg-[#40444b] transition-colors"
+                            to={`/spectrums/${serverObj.id}/${channel.id}`}
+                          >
+                            {channel.type === "text" ? (
+                              <Hash className="w-4 h-4 text-gray-400" />
+                            ) : (
+                              <Volume2 className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className="text-sm text-gray-300">
+                              {channel.name}
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {/* Add Server Button */}
       <div className="p-3">
@@ -148,6 +176,6 @@ export function ServerSidebar({
         </button>
       </div>
       <UserAccount />
-    </div>
+    </nav>
   );
 }
