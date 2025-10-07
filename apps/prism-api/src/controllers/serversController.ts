@@ -35,10 +35,18 @@ export const getServers = asyncHandler(
           {
             ownerId: currentUser.id,
           },
+          {
+            members: {
+              some: {
+                userId: currentUser.id,
+              },
+            },
+          },
         ],
       },
       include: {
         members: true,
+        channels: true,
       },
     });
     return res.status(200).json({ servers });
@@ -97,8 +105,27 @@ export const createServer = asyncHandler(
         ownerId: currentUser.id,
         name,
         iconUrl,
+        channels: {
+          create: [
+            {
+              name: 'general',
+              createdById: currentUser.id,
+              type: 'SPECTRUM_TEXT',
+            },
+          ],
+        },
+        members: {
+          create: {
+            userId: currentUser.id,
+            nickname: currentUser.username,
+          },
+        },
+      },
+      include: {
+        channels: true,
       },
     });
+
     return res
       .status(201)
       .json({ message: 'Server created successfully', server });

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ChatArea } from "@/components/ChatArea";
 
 export const Route = createFileRoute("/spectrums/$spectrumId/$channelId/")({
   component: RouteComponent,
@@ -6,9 +7,12 @@ export const Route = createFileRoute("/spectrums/$spectrumId/$channelId/")({
 
 function RouteComponent() {
   return (
-    <div>
-      Hello "/spectrums/{Route.useParams().spectrumId}/
-      {Route.useParams().channelId}/"!
+    <div className="flex h-full w-full">
+      <ChatArea
+        selectedServer={Route.useParams().spectrumId}
+        selectedChannel={Route.useParams().channelId}
+        onShowFriends={() => {}}
+      />
     </div>
   );
 }

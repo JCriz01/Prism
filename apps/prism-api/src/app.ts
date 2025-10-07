@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import usersRouter from './routes/users';
 import serverRouter from './routes/servers';
+import messagesRouter from './routes/messages';
 import { PrismaClient } from '@prisma/client';
 import passport from './utils/passport';
 const session = require('express-session');
@@ -60,6 +61,7 @@ app.use(helmet());
 app.use(passport.session());
 app.use('/api/users', usersRouter);
 app.use('/api/server', serverRouter);
+app.use('/api/messages', messagesRouter);
 
 app.use(notFoundHandler);
 //app.use(errorHandler);

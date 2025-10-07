@@ -58,6 +58,10 @@ model User {
   // Friend list (mirrored row from Friendship table)
   friends           Friendship[]      @relation("UserFriendsOwner")
   friendOf          Friendship[]      @relation("UserFriendsFriend")
+
+  channelParticipants ChannelParticipant[]
+  participantInvites  ChannelParticipant[] @relation("ParticipantInviter")
+
   @@index([username])
 }
 
@@ -189,6 +193,8 @@ model Channel {
   overwrites PermissionOverwrite[]
   invites    Invite[]
 
+  participants ChannelParticipant[]
+
   @@index([spectrumId, type, position])
   @@index([parentId])
 }
@@ -213,6 +219,30 @@ model PermissionOverwrite {
   @@unique([channelId, targetUserId])
   @@index([channelId])
 }
+
+model ChannelParticipant {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+
+  channelId  String
+  userId     String
+
+  // optional: who invited this user (useful for GROUP_DM)
+  invitedById String?
+  invitedBy   User?    @relation("ParticipantInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  // helpful for UX
+  joinedAt    DateTime @default(now())
+  lastReadAt  DateTime?
+
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])      // one row per user per channel
+  @@index([userId])                  // fast lookups of a user's DMs/channels
+  @@index([channelId])               // fast lookups of channel participants
+}
+
 
 model Message {
   id        String   @id @default(cuid())

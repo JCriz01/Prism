@@ -6,5 +6,10 @@ export const Route = createFileRoute("/spectrums/$spectrumId/")({
 
 //* Main server landing page
 function RouteComponent() {
-  return <div>Hello "/spectrums/{Route.useParams().spectrumId}/"!</div>;
+  return (
+    <div>
+      Hello "/spectrums/{Route.useParams().spectrumId}/"! This is the main
+      server landing page.
+    </div>
+  );
 }

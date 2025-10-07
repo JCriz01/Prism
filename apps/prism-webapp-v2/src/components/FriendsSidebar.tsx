@@ -7,53 +7,32 @@ import {
   Video,
   MoreVertical,
 } from "lucide-react";
+import { useOnlineUsers } from "@/lib/api/messages";
 import { useQuery } from "@tanstack/react-query";
 
 interface FriendsSidebarProps {
   onClose: () => void;
 }
 
-interface Friend {
+interface OnlineUser {
   id: string;
-  name: string;
   username: string;
-  avatar: string;
-  status: "online" | "idle" | "dnd" | "offline";
-  isTyping?: boolean;
+  name: string;
+  avatarUrl?: string;
 }
 
-const getStatusColor = (status: Friend["status"]) => {
-  switch (status) {
-    case "online":
-      return "text-green-400";
-    case "idle":
-      return "text-yellow-400";
-    case "dnd":
-      return "text-red-400";
-    case "offline":
-      return "text-gray-400";
-    default:
-      return "text-gray-400";
-  }
+const getStatusColor = () => {
+  return "text-green-400";
 };
 
-const getStatusIcon = (status: Friend["status"]) => {
-  switch (status) {
-    case "online":
-      return <Circle className="w-3 h-3 fill-current" />;
-    case "idle":
-      return <Circle className="w-3 h-3 fill-current" />;
-    case "dnd":
-      return <Circle className="w-3 h-3 fill-current" />;
-    case "offline":
-      return <Circle className="w-3 h-3" />;
-    default:
-      return <Circle className="w-3 h-3" />;
-  }
+const getStatusIcon = () => {
+  return <Circle className="w-3 h-3 fill-current" />;
 };
 
 export function FriendsSidebar({ onClose }: FriendsSidebarProps) {
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
+  const { data: onlineUsers = [], isLoading: onlineUsersLoading } =
+    useOnlineUsers();
 
   const friendData = useQuery({
     queryKey: ["friend"],
@@ -71,6 +50,11 @@ export function FriendsSidebar({ onClose }: FriendsSidebarProps) {
       }
     },
   });
+
+  // Helper function to check if a friend is online
+  const isFriendOnline = (friendId: string) => {
+    return onlineUsers.some((user) => user.id === friendId);
+  };
 
   return (
     <div className="w-80 bg-[#2f3136] flex flex-col border-l border-[#202225] h-full">
@@ -106,9 +90,13 @@ export function FriendsSidebar({ onClose }: FriendsSidebarProps) {
                       {friendObj.friend.avatarUrl}
                     </div>
                     <div
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusColor(friendObj.friend.status)}`}
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 ${isFriendOnline(friendObj.friend.id) ? getStatusColor() : "text-gray-400"}`}
                     >
-                      {/* add status icon */}
+                      {isFriendOnline(friendObj.friend.id) ? (
+                        getStatusIcon()
+                      ) : (
+                        <Circle className="w-3 h-3" />
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col">

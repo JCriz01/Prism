@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  Send,
-  Hash,
-  Volume2,
-  Users,
-  Search,
-  Inbox,
-  HelpCircle,
-  Settings,
-} from "lucide-react";
+import { Send, Hash, Users, Search, Inbox, HelpCircle } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
 import { WelcomeScreen } from "./WelcomeScreen";
+import { useSocket } from "@/hooks/useSocket";
+import { useTypingUsers } from "@/hooks/useSocket";
+import {
+  useMessages,
+  useSendMessage,
+  formatMessageTime,
+  shouldGroupMessage,
+} from "@/lib/api/messages";
 
 interface ChatAreaProps {
   selectedServer: string | null;
@@ -20,49 +19,18 @@ interface ChatAreaProps {
 
 interface Message {
   id: string;
-  userId: string;
-  username: string;
-  avatar: string;
   content: string;
-  timestamp: Date;
-  isEdited?: boolean;
+  channelId: string;
+  authorId: string;
+  author: {
+    id: string;
+    username: string;
+    name: string;
+    avatarUrl?: string;
+  };
+  createdAt: string;
+  type: "DEFAULT" | "REPLY" | "SYSTEM";
 }
-
-// Mock data - in a real app this would come from an API
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    userId: "user1",
-    username: "Alex Johnson",
-    avatar: "👨‍💻",
-    content: "Hey everyone! How's it going?",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-  },
-  {
-    id: "2",
-    userId: "user2",
-    username: "Sarah Wilson",
-    avatar: "👩‍🎨",
-    content: "Pretty good! Working on some new designs.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 3),
-  },
-  {
-    id: "3",
-    userId: "user3",
-    username: "Mike Chen",
-    avatar: "👨‍🎮",
-    content: "Anyone up for a game later?",
-    timestamp: new Date(Date.now() - 1000 * 60 * 1),
-  },
-  {
-    id: "4",
-    userId: "user1",
-    username: "Alex Johnson",
-    avatar: "👨‍💻",
-    content: "I'm down! What are we playing?",
-    timestamp: new Date(Date.now() - 1000 * 30),
-  },
-];
 
 const getChannelName = (channelId: string) => {
   // In a real app, this would fetch from the selected server's channels
@@ -95,9 +63,27 @@ export function ChatArea({
   onShowFriends,
 }: ChatAreaProps) {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const user = useUserStore((state) => state.user);
+  const token = localStorage.getItem("token");
+
+  // Socket connection
+  const {
+    isConnected,
+    joinChannel,
+    leaveChannel,
+    onNewMessage,
+    startTyping,
+    stopTyping,
+  } = useSocket(token);
+
+  // Typing users
+  const typingUsers = useTypingUsers(selectedChannel);
+
+  // Messages from API
+  const { data: messagesData, isLoading } = useMessages(selectedChannel);
+  const sendMessageMutation = useSendMessage();
+
+  const messages = messagesData?.messages || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,26 +93,67 @@ export function ChatArea({
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!message.trim() || !selectedChannel) return;
+  // Join/leave channel when selection changes
+  useEffect(() => {
+    if (selectedChannel && isConnected) {
+      joinChannel(selectedChannel);
+    } else if (!selectedChannel) {
+      leaveChannel();
+    }
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      userId: "currentUser",
-      username: user.name || "Anonymous",
-      avatar: "👤",
-      content: message.trim(),
-      timestamp: new Date(),
+    return () => {
+      if (selectedChannel) {
+        leaveChannel();
+      }
+    };
+  }, [selectedChannel, isConnected, joinChannel, leaveChannel]);
+
+  // Listen for new messages
+  useEffect(() => {
+    if (!selectedChannel) return;
+
+    const handleNewMessage = (newMessage: Message) => {
+      if (newMessage.channelId === selectedChannel) {
+        // The message will be refetched by the query invalidation
+        scrollToBottom();
+      }
     };
 
-    setMessages((prev) => [...prev, newMessage]);
-    setMessage("");
+    const cleanup = onNewMessage(handleNewMessage);
+    return cleanup;
+  }, [selectedChannel, onNewMessage]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || !selectedChannel) return;
+
+    try {
+      // Send via API (which will trigger socket broadcast)
+      await sendMessageMutation.mutateAsync({
+        channelId: selectedChannel,
+        content: message.trim(),
+      });
+
+      setMessage("");
+      stopTyping();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+
+    if (e.target.value.trim()) {
+      startTyping();
+    } else {
+      stopTyping();
     }
   };
 
@@ -146,6 +173,9 @@ export function ChatArea({
           <span className="text-sm text-gray-400">
             in {getServerName(selectedServer)}
           </span>
+          {!isConnected && (
+            <span className="text-xs text-red-400">(Disconnected)</span>
+          )}
         </div>
 
         <div className="flex items-center space-x-2">
@@ -168,32 +198,80 @@ export function ChatArea({
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className="flex items-start space-x-3 group hover:bg-[#40444b] p-2 rounded-md transition-colors"
-          >
-            <div className="w-10 h-10 bg-[#5865f2] rounded-full flex items-center justify-center text-white text-lg flex-shrink-0">
-              {msg.avatar}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2 mb-1">
-                <span className="font-medium text-white">{msg.username}</span>
-                <span className="text-xs text-gray-400">
-                  {msg.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-                {msg.isEdited && (
-                  <span className="text-xs text-gray-400">(edited)</span>
-                )}
-              </div>
-              <p className="text-gray-200 break-words">{msg.content}</p>
-            </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="text-gray-400">Loading messages...</div>
           </div>
-        ))}
+        ) : (
+          messages.map((msg: Message, index: number) => {
+            const previousMessage = index > 0 ? messages[index - 1] : null;
+            const shouldGroup = shouldGroupMessage(msg, previousMessage);
+
+            return (
+              <div
+                key={msg.id}
+                className={`flex items-start space-x-3 group hover:bg-[#40444b] p-2 rounded-md transition-colors ${
+                  shouldGroup ? "mt-1" : "mt-4"
+                }`}
+              >
+                {!shouldGroup && (
+                  <div className="w-10 h-10 bg-[#5865f2] rounded-full flex items-center justify-center text-white text-lg flex-shrink-0">
+                    {msg.author.avatarUrl ? (
+                      <img
+                        src={msg.author.avatarUrl}
+                        alt={msg.author.username}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      msg.author.username.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                )}
+                {shouldGroup && <div className="w-10 h-10 flex-shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  {!shouldGroup && (
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="font-medium text-white">
+                        {msg.author.name || msg.author.username}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatMessageTime(msg.createdAt)}
+                      </span>
+                    </div>
+                  )}
+                  <p className="text-gray-200 break-words">{msg.content}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+
+        {/* Typing indicator */}
+        {typingUsers.length > 0 && (
+          <div className="flex items-center space-x-2 p-2 text-sm text-gray-400">
+            <div className="flex space-x-1">
+              <div
+                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              ></div>
+            </div>
+            <span>
+              {typingUsers.length === 1
+                ? `${typingUsers[0].username} is typing...`
+                : `${typingUsers.length} people are typing...`}
+            </span>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -203,17 +281,20 @@ export function ChatArea({
           <div className="flex-1 relative">
             <textarea
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={handleInputChange}
               onKeyPress={handleKeyPress}
               placeholder={`Message #${getChannelName(selectedChannel)}`}
               className="w-full p-3 bg-[#40444b] border border-[#202225] rounded-md text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#5865f2] focus:border-transparent"
               rows={1}
               style={{ minHeight: "44px", maxHeight: "144px" }}
+              disabled={!isConnected || sendMessageMutation.isPending}
             />
           </div>
           <button
             onClick={handleSendMessage}
-            disabled={!message.trim()}
+            disabled={
+              !message.trim() || !isConnected || sendMessageMutation.isPending
+            }
             className="p-3 bg-[#5865f2] hover:bg-[#4752c4] disabled:bg-[#40444b] disabled:cursor-not-allowed rounded-md transition-colors"
           >
             <Send className="w-4 h-4 text-white" />
