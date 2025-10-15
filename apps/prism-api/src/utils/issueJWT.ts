@@ -6,8 +6,9 @@ const secret = process.env.JWT_SECRET || 'secret';
 
 export const issueJWT = (user: User) => {
   const id = user.id;
-  const expiresIn = '1d';
+  const expiresIn = '7d';
   const payload = {
+    id: id,
     sub: id,
     iat: Date.now(),
   };

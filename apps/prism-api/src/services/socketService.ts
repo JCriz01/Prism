@@ -18,8 +18,12 @@ export class SocketService {
 
   constructor(server: HttpServer) {
     this.io = new Server(server, {
+      path: '/socket.io',
       cors: {
-        origin: process.env.CLIENT_URL ?? 'http://localhost:3001',
+        origin: [
+          process.env.CLIENT_URL ?? 'http://localhost:3000',
+          'http://localhost:3001',
+        ],
         methods: ['GET', 'POST'],
         credentials: true,
       },
@@ -32,14 +36,18 @@ export class SocketService {
   private setupMiddleware() {
     this.io.use(async (socket: AuthedSocket, next) => {
       try {
+        console.log('socket.handshake.headers', socket.handshake.headers);
+
+        //TODO:  potentially remove this since the token is sent without the Bearer prefix.
         const authHeader =
           (socket.handshake.headers.authorization as string | undefined) ?? '';
+        console.log('authHeader', authHeader);
         const bearer = authHeader.startsWith('Bearer ')
           ? authHeader.slice('Bearer '.length)
           : undefined;
 
         const token = (socket.handshake.auth as any)?.token || bearer;
-
+        console.log('token', token);
         if (!token) {
           return next(new Error('Authentication error: No token provided'));
         }
@@ -252,4 +260,3 @@ export class SocketService {
 }
 
 export default SocketService;
-
