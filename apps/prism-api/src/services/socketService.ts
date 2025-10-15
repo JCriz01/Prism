@@ -127,6 +127,11 @@ export class SocketService {
           socket.join(`channel_${channelId}`);
           socket.emit('joined_channel', { channelId });
           console.log(`User ${socket.username} joined channel ${channelId}`);
+          console.log(
+            `Users in channel_${channelId}:`,
+            this.io.sockets.adapter.rooms.get(`channel_${channelId}`)?.size ||
+              0,
+          );
         } catch (error) {
           console.error('Error joining channel:', error);
           socket.emit('error', { message: 'Failed to join channel' });
@@ -203,6 +208,12 @@ export class SocketService {
               author: message.author,
               createdAt: message.createdAt,
               type: message.type,
+            });
+
+            console.log(`Broadcasting message to channel_${channelId}:`, {
+              id: message.id,
+              content: message.content,
+              authorId: message.authorId,
             });
 
             console.log(

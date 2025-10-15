@@ -130,20 +130,23 @@ export function ChatArea({
     if (!selectedChannel) return;
 
     const handleNewMessage = (newMessage: Message) => {
+      console.log("Received new message:", newMessage);
       if (newMessage.channelId !== selectedChannel) return;
-      if (newMessage.channelId === selectedChannel) {
-        // The message will be refetched by the query invalidation
-        queryClient.setQueryData(
-          ["messages", selectedChannel],
-          (old: { messages: Message[] } | undefined) => {
-            const prev = old?.messages || [];
 
-            const exists = prev.some((message) => message.id == newMessage.id);
-            return { message: exists ? prev : [...prev, newMessage] };
-          }
-        );
-        scrollToBottom();
-      }
+      // Update the query cache with the new message
+      queryClient.setQueryData(
+        ["messages", selectedChannel],
+        (old: { messages: Message[] } | undefined) => {
+          const prev = old?.messages || [];
+
+          // Check if message already exists to avoid duplicates
+          const exists = prev.some((message) => message.id === newMessage.id);
+          if (exists) return old;
+
+          return { messages: [...prev, newMessage] };
+        }
+      );
+      scrollToBottom();
     };
 
     const cleanup = onNewMessage(handleNewMessage);

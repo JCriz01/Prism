@@ -56,6 +56,7 @@ class SocketService {
 
     this.socket.on("connect", () => {
       console.log("Connected to server:", this.socket?.id);
+      console.log("Socket connected:", this.socket?.connected);
     });
 
     this.socket.on("disconnect", () => {
@@ -65,12 +66,19 @@ class SocketService {
     this.socket.on("error", (error) => {
       console.error("Socket error:", error);
     });
+
+    this.socket.on("joined_channel", (data) => {
+      console.log("Successfully joined channel:", data);
+    });
   }
 
   // Channel management
   joinChannel(channelId: string) {
     if (this.socket?.connected) {
+      console.log("Joining channel:", channelId);
       this.socket.emit("join_channel", { channelId });
+    } else {
+      console.log("Cannot join channel - socket not connected");
     }
   }
 
@@ -89,7 +97,11 @@ class SocketService {
 
   onNewMessage(callback: (message: Message) => void) {
     if (this.socket) {
-      this.socket.on("new_message", callback);
+      console.log("Setting up new_message listener");
+      this.socket.on("new_message", (message) => {
+        console.log("Socket received new_message:", message);
+        callback(message);
+      });
     }
   }
 
