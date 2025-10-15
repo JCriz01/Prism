@@ -4,6 +4,7 @@ import { useUserStore } from "@/store/userStore";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { useSocket } from "@/hooks/useSocket";
 import { useTypingUsers } from "@/hooks/useSocket";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useMessages,
   useSendMessage,
@@ -64,7 +65,10 @@ export function ChatArea({
 }: ChatAreaProps) {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const token = localStorage.getItem("token");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const token = localStorage.getItem("user-token");
+
+  const queryClient = useQueryClient();
 
   // Socket connection
   const {
@@ -83,6 +87,15 @@ export function ChatArea({
   const { data: messagesData, isLoading } = useMessages(selectedChannel);
   const sendMessageMutation = useSendMessage();
 
+  // Debug logging
+  console.log("ChatArea Debug:", {
+    selectedChannel,
+    isConnected,
+    token: token ? "exists" : "missing",
+    sendMessagePending: sendMessageMutation.isPending,
+    messageValue: message,
+  });
+
   const messages = messagesData?.messages || [];
 
   const scrollToBottom = () => {
@@ -97,6 +110,10 @@ export function ChatArea({
   useEffect(() => {
     if (selectedChannel && isConnected) {
       joinChannel(selectedChannel);
+      // Focus the textarea when switching channels
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
     } else if (!selectedChannel) {
       leaveChannel();
     }
@@ -113,15 +130,25 @@ export function ChatArea({
     if (!selectedChannel) return;
 
     const handleNewMessage = (newMessage: Message) => {
+      if (newMessage.channelId !== selectedChannel) return;
       if (newMessage.channelId === selectedChannel) {
         // The message will be refetched by the query invalidation
+        queryClient.setQueryData(
+          ["messages", selectedChannel],
+          (old: { messages: Message[] } | undefined) => {
+            const prev = old?.messages || [];
+
+            const exists = prev.some((message) => message.id == newMessage.id);
+            return { message: exists ? prev : [...prev, newMessage] };
+          }
+        );
         scrollToBottom();
       }
     };
 
     const cleanup = onNewMessage(handleNewMessage);
     return cleanup;
-  }, [selectedChannel, onNewMessage]);
+  }, [selectedChannel, onNewMessage, queryClient]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedChannel) return;
@@ -135,20 +162,36 @@ export function ChatArea({
 
       setMessage("");
       stopTyping();
+
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log("Key pressed:", e.key);
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
+  const handleTextareaClick = () => {
+    console.log("Textarea clicked!");
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    console.log("Input change:", e.target.value);
     setMessage(e.target.value);
+
+    // Auto-resize textarea
+    const textarea = e.target;
+    textarea.style.height = "auto";
+    textarea.style.height = Math.min(textarea.scrollHeight, 144) + "px";
 
     if (e.target.value.trim()) {
       startTyping();
@@ -280,14 +323,17 @@ export function ChatArea({
         <div className="flex items-center space-x-3">
           <div className="flex-1 relative">
             <textarea
+              ref={textareaRef}
               value={message}
               onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
+              onClick={handleTextareaClick}
               placeholder={`Message #${getChannelName(selectedChannel)}`}
               className="w-full p-3 bg-[#40444b] border border-[#202225] rounded-md text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#5865f2] focus:border-transparent"
               rows={1}
               style={{ minHeight: "44px", maxHeight: "144px" }}
-              disabled={!isConnected || sendMessageMutation.isPending}
+              disabled={sendMessageMutation.isPending}
+              autoFocus
             />
           </div>
           <button

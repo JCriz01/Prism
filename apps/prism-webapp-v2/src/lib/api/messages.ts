@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5200";
 
 interface Message {
   id: string;
@@ -40,7 +40,7 @@ interface OnlineUser {
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("user-token");
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
@@ -217,4 +217,3 @@ export const shouldGroupMessage = (
     timeDiff < fiveMinutes
   );
 };
-

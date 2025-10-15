@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { socketService } from "../lib/socketService";
+import { Socket } from "socket.io-client";
 
 interface Message {
   id: string;
@@ -28,6 +29,9 @@ export function useSocket(token: string | null) {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const socketRef = useRef<Socket | null>(null);
+  const joinedChannelRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (token) {
       socketService.connect(token);
@@ -48,18 +52,20 @@ export function useSocket(token: string | null) {
   }, [token]);
 
   const joinChannel = (channelId: string) => {
-    if (currentChannel) {
-      socketService.leaveChannel(currentChannel);
-    }
+    console.log(joinedChannelRef.current, channelId);
+    if (joinedChannelRef.current === channelId) return; // Already joined
 
     socketService.joinChannel(channelId);
     setCurrentChannel(channelId);
-
+    joinedChannelRef.current = channelId;
     // Clear typing users when switching channels
     setTypingUsers([]);
   };
 
   const leaveChannel = () => {
+    if (!currentChannel) return;
+    if (joinedChannelRef.current !== currentChannel) return; // Not joined
+
     if (currentChannel) {
       socketService.leaveChannel(currentChannel);
       setCurrentChannel(null);
@@ -188,4 +194,3 @@ export function useTypingUsers(channelId: string | null) {
 
   return typingUsers;
 }
-

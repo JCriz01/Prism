@@ -31,7 +31,10 @@ class SocketService {
     }
 
     this.token = token;
-    this.socket = io(import.meta.env.VITE_API_URL || "http://localhost:3000", {
+    console.log("token", token);
+    this.socket = io("http://localhost:5200", {
+      path: "/socket.io",
+      withCredentials: true,
       auth: {
         token: token,
       },
@@ -161,4 +164,3 @@ class SocketService {
 // Create singleton instance
 export const socketService = new SocketService();
 export default socketService;
-
