@@ -164,23 +164,17 @@ router.post(
     });
 
     // Broadcast the message via Socket.IO
-    const socketService = req.app.get('socketService');
-    if (socketService) {
-      socketService.broadcastToChannel(channelId, 'new_message', {
-        id: message.id,
-        content: message.content,
-        channelId: message.channelId,
-        authorId: message.authorId,
-        author: message.author,
-        createdAt: message.createdAt,
-        type: message.type,
-      });
-      console.log(`API: Broadcasting message to channel_${channelId}:`, {
-        id: message.id,
-        content: message.content,
-        authorId: message.authorId,
-      });
-    }
+    const payload = {
+      id: message.id,
+      content: message.content,
+      channelId: message.channelId,
+      authorId: message.authorId,
+      createdAt: message.createdAt,
+      type: message.type,
+    };
+
+    const io = req.app.get('io');
+    io?.to(`channel:${message.channelId}`).emit('message:new', payload);
 
     res.status(201).json(message);
   }),

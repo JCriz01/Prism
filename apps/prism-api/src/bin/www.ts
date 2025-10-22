@@ -7,7 +7,11 @@
 import app from '../app';
 var debug = require('debug')('prism-api:server');
 import http from 'http';
-import SocketService from '../services/socketService';
+import { Server as IOServer } from 'socket.io';
+import { socketAuth } from '../sockets/middleware/auth';
+import { rateLimit } from '../sockets/middleware/rateLimit';
+import { registerChatHandlers } from '../sockets/handlers/chat';
+import { registerPresenceHandlers } from '../sockets/handlers/presence';
 //* ENV variables
 const hostname = process.env.ServerHost || 'localhost';
 
@@ -24,11 +28,29 @@ app.set('port', port);
 
 const server = http.createServer(app);
 
-// Initialize Socket.IO service
-const socketService = new SocketService(server);
+// Initialize Socket.IO
+const io = new IOServer(server, {
+  cors: {
+    origin: 'http://localhost:3001',
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000,
+  },
+});
 
-// Make socket service available globally
-app.set('socketService', socketService);
+io.use(socketAuth());
+io.use(rateLimit());
+
+io.on('connection', (socket) => {
+  registerChatHandlers(io, socket);
+  registerPresenceHandlers(io, socket);
+});
+
+app.set('io', io);
+//setIO(io);
+
 server.listen({ port, hostname }, () =>
   console.log('Server initilized on host:', `${hostname}:${port}`),
 );
