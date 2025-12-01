@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={cn(openSans.variable, "bg-white dark:bg-[#313338]")}>
+        <body className="bg-white dark:bg-[#313338] font-sans ">
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
