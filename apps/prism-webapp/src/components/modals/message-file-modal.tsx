@@ -8,14 +8,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import qs from "query-string";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
+import Modal from "@/components/solutions/Dialog";
 import {
   Form,
   FormControl,
@@ -72,48 +65,41 @@ export function MessageFileModal() {
   };
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">
-            Add an attachment
-          </DialogTitle>
-          <DialogDescription className="text-center text-zinc-500">
-            Send a file as a message.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8"
-          >
-            <div className="space-y-8 px-6">
-              <div className="flex items-center justify-center text-center">
-                <FormField
-                  control={form.control}
-                  name="fileUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <FileUpload
-                          endpoint="messageFile"
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
+    <Modal open={isModalOpen} onClose={handleClose} title="Add an attachment">
+      <p className="text-center text-sm text-zinc-500 mb-4">
+        Send a file as a message.
+      </p>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8"
+        >
+          <div className="space-y-8">
+            <div className="flex items-center justify-center text-center">
+              <FormField
+                control={form.control}
+                name="fileUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <FileUpload
+                        endpoint="messageFile"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
-            <DialogFooter className="bg-gray-100 px-6 py-4">
-              <Button disabled={isLoading} variant="primary">
-                Send
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </div>
+          <div className="bg-gray-100 px-6 py-4 -mx-6 -mb-6 rounded-b-2xl flex justify-end">
+            <Button disabled={isLoading} variant="primary">
+              Send
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </Modal>
   );
 }

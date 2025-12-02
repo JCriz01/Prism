@@ -16,13 +16,7 @@ import qs from "query-string";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import Modal from "@/components/solutions/Dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,17 +94,15 @@ export function MembersModal() {
   };
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white text-black overflow-hidden">
-        <DialogHeader className="pt-8 px-6">
-          <DialogTitle className="text-2xl text-center font-bold">
-            Manage Members
-          </DialogTitle>
-          <DialogDescription className="text-center text-zinc-500">
-            {server?.members?.length} Members
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="mt-8 max-h-[420px] pr-6">
+    <Modal
+      open={isModalOpen}
+      onClose={onClose}
+      title="Manage Members"
+    >
+      <p className="text-center text-sm text-zinc-500 mb-4">
+        {server?.members?.length} Members
+      </p>
+      <ScrollArea className="max-h-[420px] pr-6">
           {server?.members?.map((member) => (
             <div key={member.id} className="flex items-center gap-x-2 mb-6">
               <UserAvatar src={member.profile.imageUrl} />
@@ -174,7 +166,6 @@ export function MembersModal() {
             </div>
           ))}
         </ScrollArea>
-      </DialogContent>
-    </Dialog>
+    </Modal>
   );
 }
